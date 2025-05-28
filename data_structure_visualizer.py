@@ -5,7 +5,7 @@ import heapq # For heap (Priority Queue)
 
 st.set_page_config(page_title="Advanced Data Structure Visualizer", layout="wide")
 st.title("📚 Advanced Interactive Data Structure Visualizer")
-st.markdown("Explore how fundamental data structures and their algorithms work.")
+st.markdown("Explore how fundamental data structures and their algorithms work, including their time and space complexity.")
 
 # --- Session State Initialization for Data Structures ---
 if "my_list" not in st.session_state:
@@ -188,6 +188,18 @@ st.sidebar.write("---")
 st.header("1. Python List (Array-like)")
 st.markdown("A dynamic array that can grow and shrink. Elements are ordered.")
 
+# Complexity Expander
+with st.expander("Time and Space Complexity for Python List"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity:**
+        * **Access/Lookup by Index (`list[i]`):** $O(1)$
+        * **Append (`list.append(item)`):** $O(1)$ amortized (resizing takes $O(N)$, but rarely)
+        * **Insert (`list.insert(i, item)`):** $O(N)$ (elements after `i` must be shifted)
+        * **Delete (`list.pop(i)`, `del list[i]`, `list.remove(item)`):** $O(N)$ (elements after `i` must be shifted)
+        * **Search (`item in list` or `list.index(item)`):** $O(N)$ (linear scan)
+    """)
+
 list_col1, list_col2 = st.columns([1, 3])
 
 with list_col1:
@@ -219,6 +231,17 @@ st.write("---")
 # --- 2. Stack (LIFO) ---
 st.header("2. Stack (LIFO - Last In, First Out)")
 st.markdown("A collection where elements are added and removed from the same end (the 'top'). Think of a stack of plates.")
+
+# Complexity Expander
+with st.expander("Time and Space Complexity for Stack"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity:**
+        * **Push:** $O(1)$
+        * **Pop:** $O(1)$
+        * **Peek/Top:** $O(1)$
+        * **IsEmpty:** $O(1)$
+    """)
 
 stack_col1, stack_col2 = st.columns([1, 3])
 
@@ -262,6 +285,17 @@ st.write("---")
 st.header("3. Queue (FIFO - First In, First Out)")
 st.markdown("A collection where elements are added to one end ('rear') and removed from the other end ('front'). Think of a waiting line.")
 
+# Complexity Expander
+with st.expander("Time and Space Complexity for Queue (using `collections.deque`)"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity:**
+        * **Enqueue (Add to Rear):** $O(1)$
+        * **Dequeue (Remove from Front):** $O(1)$
+        * **Front/Peek:** $O(1)$
+        * **IsEmpty:** $O(1)$
+    """)
+
 queue_col1, queue_col2 = st.columns([1, 3])
 
 with queue_col1:
@@ -300,6 +334,16 @@ st.write("---")
 st.header("4. Priority Queue (Min-Heap Implementation)")
 st.markdown("A collection where elements are served based on priority. Here, lower numbers have higher priority (Min-Heap).")
 
+# Complexity Expander
+with st.expander("Time and Space Complexity for Priority Queue (Min-Heap)"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity:**
+        * **Insert (`heapq.heappush`):** $O(\log N)$
+        * **Extract Min (`heapq.heappop`):** $O(\log N)$
+        * **Peek Min:** $O(1)$
+    """)
+
 pq_col1, pq_col2 = st.columns([1, 3])
 
 with pq_col1:
@@ -330,11 +374,8 @@ with pq_col2:
         st.write(f"**Current Size:** `{len(st.session_state.my_priority_queue)}`")
         
         st.subheader("Conceptual Tree View (for Heap):")
-        # For a heap, showing the array is easier, drawing the tree is complex.
-        # We can offer a simplified visual hint based on the array.
         st.markdown("*(Note: This is the underlying array. The tree structure maintains heap property.)*")
         st.write("```")
-        # Simple text representation of the heap tree (very basic)
         temp_heap = list(st.session_state.my_priority_queue) # make a copy
         
         level = 0
@@ -342,11 +383,10 @@ with pq_col2:
         while idx < len(temp_heap):
             nodes_at_level = 2**level
             level_nodes = temp_heap[idx : idx + nodes_at_level]
-            st.write(" ".join(map(str, level_nodes)).center(60)) # Center based on some width
+            st.write(" ".join(map(str, level_nodes)).center(60))
             idx += nodes_at_level
             level += 1
         st.write("```")
-
 
     else:
         st.info("The Priority Queue is currently empty.")
@@ -356,6 +396,20 @@ st.write("---")
 # --- 5. Binary Search Tree (BST) ---
 st.header("5. Binary Search Tree (BST)")
 st.markdown("A tree-based data structure where values in the left subtree are smaller, and values in the right subtree are larger.")
+
+# Complexity Expander
+with st.expander("Time and Space Complexity for Binary Search Tree"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity (Average Case - Balanced Tree):**
+        * **Insert:** $O(\log N)$
+        * **Search:** $O(\log N)$
+        * **Delete:** $O(\log N)$
+    * **Time Complexity (Worst Case - Skewed Tree):**
+        * **Insert:** $O(N)$
+        * **Search:** $O(N)$
+        * **Delete:** $O(N)$
+    """)
 
 bst_col1, bst_col2 = st.columns([1, 3])
 
@@ -379,7 +433,8 @@ with bst_col1:
 
     delete_bst_val = st.number_input("Value to Delete", value=random.randint(1, 100), key="bst_delete_input")
     if st.button("Delete Node", key="bst_delete_btn"):
-        original_bst_json = to_dict(st.session_state.my_bst) # For comparison
+        # For feedback, convert to dict before and after to check if deletion occurred
+        original_bst_json = to_dict(st.session_state.my_bst)
         st.session_state.my_bst = delete_bst_node(st.session_state.my_bst, delete_bst_val)
         if to_dict(st.session_state.my_bst) != original_bst_json:
             st.success(f"Deleted node with value {delete_bst_val}.")
@@ -404,6 +459,20 @@ st.write("---")
 # --- 6. Hash Table (with Chaining) ---
 st.header("6. Hash Table (with Simple Chaining)")
 st.markdown("Maps keys to values using a hash function. Collisions are handled by storing multiple key-value pairs in a 'chain' (list) within each bucket.")
+
+# Complexity Expander
+with st.expander("Time and Space Complexity for Hash Table (with Chaining)"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements (plus $O(M)$ for $M$ buckets, where $M$ is table size).
+    * **Time Complexity (Average Case):**
+        * **Insert:** $O(1)$
+        * **Lookup:** $O(1)$
+        * **Delete:** $O(1)$
+    * **Time Complexity (Worst Case - All collisions, resulting in a single long chain):**
+        * **Insert:** $O(N)$
+        * **Lookup:** $O(N)$
+        * **Delete:** $O(N)$
+    """)
 
 hash_table_col1, hash_table_col2 = st.columns([1, 3])
 
@@ -449,7 +518,6 @@ with hash_table_col1:
 with hash_table_col2:
     st.markdown("**Current Hash Table State (Buckets):**")
     if any(st.session_state.my_hash_table): # Check if any bucket has data
-        # Display as a series of buckets
         for i, bucket in enumerate(st.session_state.my_hash_table):
             bucket_content = f"Bucket {i}: "
             if bucket:
