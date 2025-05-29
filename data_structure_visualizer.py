@@ -5,26 +5,126 @@ import heapq # For heap (Priority Queue)
 
 st.set_page_config(page_title="Advanced Data Structure Visualizer", layout="wide")
 st.title("📚 Advanced Interactive Data Structure Visualizer")
-st.markdown("Explore how fundamental data structures and their algorithms work, including their time and space complexity.")
+st.markdown("Explore how fundamental data structures and their algorithms work, including their time and space complexity. This app focuses on structures that can be effectively visualized with text-based representations.")
+
+st.sidebar.markdown("""
+### Data Structures Included:
+- **Linear:** List, Stack, Queue, Deque, Singly Linked List
+- **Non-Linear:** Binary Search Tree, Priority Queue (Min-Heap)
+- **Hashing:** Hash Table (Chaining), Hash Set
+""")
+
+st.sidebar.write("---")
+if st.sidebar.button("Reset All Data Structures", key="reset_all_btn"):
+    st.session_state.my_list = []
+    st.session_state.my_stack = []
+    st.session_state.my_queue = collections.deque()
+    st.session_state.my_singly_linked_list = None # Root of SLL
+    st.session_state.my_deque = collections.deque()
+    st.session_state.my_bst = None
+    st.session_state.my_priority_queue = []
+    st.session_state.my_hash_table = [[] for _ in range(st.session_state.hash_table_size)]
+    st.session_state.my_hash_set = [[] for _ in range(st.session_state.hash_set_size)]
+    st.success("All data structures reset!")
+    st.rerun()
+
+st.sidebar.write("---")
+st.sidebar.info("""
+**Note on Complexity:**
+Some advanced data structures (e.g., AVL Trees, Red-Black Trees, Graphs with complex algorithms like Dijkstra's, B-Trees, Bloom Filters) require specialized graphical visualization and complex algorithmic implementations that are beyond the scope of a basic text-based Streamlit app. This visualizer focuses on conceptual understanding.
+""")
 
 # --- Session State Initialization for Data Structures ---
 if "my_list" not in st.session_state:
     st.session_state.my_list = []
 if "my_stack" not in st.session_state:
-    st.session_state.my_stack = [] # Using a list for stack
+    st.session_state.my_stack = []
 if "my_queue" not in st.session_state:
-    st.session_state.my_queue = collections.deque() # Using collections.deque for efficient queue
+    st.session_state.my_queue = collections.deque()
+if "my_singly_linked_list" not in st.session_state:
+    st.session_state.my_singly_linked_list = None # Head of the singly linked list
+if "my_deque" not in st.session_state:
+    st.session_state.my_deque = collections.deque()
 if "my_bst" not in st.session_state:
-    st.session_state.my_bst = None # Represents the root of the BST
+    st.session_state.my_bst = None
 if "my_priority_queue" not in st.session_state:
-    st.session_state.my_priority_queue = [] # Using heapq (min-heap)
+    st.session_state.my_priority_queue = []
 if "my_hash_table" not in st.session_state:
-    st.session_state.my_hash_table = [[] for _ in range(10)] # Simple chaining hash table with 10 buckets
+    st.session_state.my_hash_table = [[] for _ in range(10)]
 if "hash_table_size" not in st.session_state:
-    st.session_state.hash_table_size = 10 # Default number of buckets
+    st.session_state.hash_table_size = 10
+if "my_hash_set" not in st.session_state:
+    st.session_state.my_hash_set = [[] for _ in range(10)]
+if "hash_set_size" not in st.session_state:
+    st.session_state.hash_set_size = 10
+
+
+# --- Helper Functions for Singly Linked List (SLL) ---
+class SLLNode:
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
+    def __repr__(self):
+        return f"Node({self.value})"
+
+def sll_to_list_representation(head):
+    elements = []
+    current = head
+    while current:
+        elements.append(current.value)
+        current = current.next
+    return elements
+
+def sll_display_text(head):
+    if not head:
+        return "(empty)"
+    
+    current = head
+    s = ""
+    while current:
+        s += f"{current.value}"
+        if current.next:
+            s += " -> "
+        current = current.next
+    return s
+
+def sll_append(head, value):
+    new_node = SLLNode(value)
+    if head is None:
+        return new_node
+    current = head
+    while current.next:
+        current = current.next
+    current.next = new_node
+    return head
+
+def sll_prepend(head, value):
+    new_node = SLLNode(value)
+    new_node.next = head
+    return new_node
+
+def sll_delete_by_value(head, value):
+    if head is None:
+        return None # List is empty
+
+    # If head is the node to be deleted
+    if head.value == value:
+        return head.next
+
+    current = head
+    prev = None
+    while current and current.value != value:
+        prev = current
+        current = current.next
+
+    if current is None: # Value not found
+        return head
+    
+    prev.next = current.next # Skip the current node
+    return head
 
 # --- Helper Functions for Binary Search Tree (BST) ---
-# Node structure for BST operations
 class BSTNode:
     def __init__(self, value):
         self.value = value
@@ -32,7 +132,6 @@ class BSTNode:
         self.right = None
 
     def __repr__(self):
-        # A simple representation for debugging/JSON conversion
         return f"Node({self.value})"
 
 def to_dict(node):
@@ -45,7 +144,7 @@ def insert_bst_node(root, value):
         return BSTNode(value)
     if value < root.value:
         root.left = insert_bst_node(root.left, value)
-    else: # Allow duplicates to go to the right
+    else:
         root.right = insert_bst_node(root.right, value)
     return root
 
@@ -76,25 +175,21 @@ def find_min_node(node):
 
 def delete_bst_node(root, value):
     if root is None:
-        return root # Value not found
+        return root
 
-    # Traverse to find the node
     if value < root.value:
         root.left = delete_bst_node(root.left, value)
     elif value > root.value:
         root.right = delete_bst_node(root.right, value)
     else: # Node to be deleted found
-        # Case 1: No child or one child
         if root.left is None:
             return root.right
         elif root.right is None:
             return root.left
         
-        # Case 2: Two children
-        # Get the in-order successor (smallest in the right subtree)
         temp = find_min_node(root.right)
-        root.value = temp.value # Copy successor's content to this node
-        root.right = delete_bst_node(root.right, temp.value) # Delete the in-order successor
+        root.value = temp.value
+        root.right = delete_bst_node(root.right, temp.value)
     return root
 
 def display_bst_node_text(node, prefix="", is_left=None):
@@ -104,20 +199,18 @@ def display_bst_node_text(node, prefix="", is_left=None):
             connector = "├── L: "
         elif is_left is False:
             connector = "└── R: "
-        elif is_left is None: # Root node
+        elif is_left is None:
             connector = "Root: "
 
         st.write(f"{prefix}{connector}**{node.value}**")
         
         new_prefix = prefix + ("│   " if is_left is not False else "    ") 
 
-        # Recursively display left child
         if node.left:
             display_bst_node_text(node.left, new_prefix, True)
         else:
             st.write(f"{new_prefix}├── L: (null)")
 
-        # Recursively display right child
         if node.right:
             display_bst_node_text(node.right, new_prefix, False)
         else:
@@ -125,19 +218,16 @@ def display_bst_node_text(node, prefix="", is_left=None):
 
 # --- Helper Functions for Hash Table ---
 def hash_function(key, table_size):
-    # Simple hash function: sum of ASCII values modulo table size
     return sum(ord(c) for c in str(key)) % table_size
 
 def insert_hash_table(table, key, value, table_size):
     bucket_index = hash_function(key, table_size)
     
-    # Check if key already exists in the bucket (update value if so)
     for i, (k, v) in enumerate(table[bucket_index]):
         if k == key:
             table[bucket_index][i] = (key, value)
             return f"Key '{key}' updated in bucket {bucket_index}."
     
-    # If key not found, add new key-value pair
     table[bucket_index].append((key, value))
     return f"Key '{key}' inserted into bucket {bucket_index}."
 
@@ -169,26 +259,38 @@ def delete_hash_table(table, key, table_size):
     else:
         return f"Key '{key}' not found in bucket {bucket_index} for deletion."
 
+# --- Helper Functions for Hash Set ---
+def hash_set_add(table, key, table_size):
+    bucket_index = hash_function(key, table_size)
+    if key not in table[bucket_index]:
+        table[bucket_index].append(key)
+        return f"Key '{key}' added to bucket {bucket_index}."
+    return f"Key '{key}' already exists in bucket {bucket_index}."
 
-# --- Main Layout ---
-st.sidebar.header("Global Options")
-if st.sidebar.button("Reset All Data Structures", key="reset_all_btn"):
-    st.session_state.my_list = []
-    st.session_state.my_stack = []
-    st.session_state.my_queue = collections.deque()
-    st.session_state.my_bst = None
-    st.session_state.my_priority_queue = []
-    st.session_state.my_hash_table = [[] for _ in range(st.session_state.hash_table_size)]
-    st.success("All data structures reset!")
-    st.rerun()
+def hash_set_remove(table, key, table_size):
+    bucket_index = hash_function(key, table_size)
+    original_bucket_len = len(table[bucket_index])
+    table[bucket_index] = [k for k in table[bucket_index] if k != key]
+    if len(table[bucket_index]) < original_bucket_len:
+        return f"Key '{key}' removed from bucket {bucket_index}."
+    return f"Key '{key}' not found in bucket {bucket_index} for removal."
 
-st.sidebar.write("---")
+def hash_set_contains(table, key, table_size):
+    bucket_index = hash_function(key, table_size)
+    if key in table[bucket_index]:
+        return True, [f"Key '{key}' found in bucket {bucket_index}."]
+    return False, [f"Key '{key}' not found in bucket {bucket_index}."]*(1 if not table[bucket_index] else 0) + [f"Searched bucket {bucket_index}: {table[bucket_index]}"]
+
+
+# --- Main Application Sections ---
+
+st.header("Linear Data Structures")
+st.write("---")
 
 # --- 1. Python List (Array-like) ---
-st.header("1. Python List (Array-like)")
+st.subheader("1. Python List (Array-like)")
 st.markdown("A dynamic array that can grow and shrink. Elements are ordered.")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Python List"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements.
@@ -201,7 +303,6 @@ with st.expander("Time and Space Complexity for Python List"):
     """)
 
 list_col1, list_col2 = st.columns([1, 3])
-
 with list_col1:
     st.markdown("**Operations:**")
     new_list_val = st.number_input("Value to Add", value=random.randint(1, 100), key="list_add_input")
@@ -217,7 +318,6 @@ with list_col1:
     if st.button("Clear List", key="list_clear_btn"):
         st.session_state.my_list = []
         st.error("List cleared.")
-
 with list_col2:
     st.markdown("**Current List State:**")
     if st.session_state.my_list:
@@ -225,14 +325,12 @@ with list_col2:
         st.write(f"**Current Size:** `{len(st.session_state.my_list)}`")
     else:
         st.info("The list is currently empty.")
-
 st.write("---")
 
 # --- 2. Stack (LIFO) ---
-st.header("2. Stack (LIFO - Last In, First Out)")
+st.subheader("2. Stack (LIFO - Last In, First Out)")
 st.markdown("A collection where elements are added and removed from the same end (the 'top'). Think of a stack of plates.")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Stack"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements.
@@ -244,7 +342,6 @@ with st.expander("Time and Space Complexity for Stack"):
     """)
 
 stack_col1, stack_col2 = st.columns([1, 3])
-
 with stack_col1:
     st.markdown("**Operations:**")
     new_stack_val = st.number_input("Value to Push", value=random.randint(1, 100), key="stack_push_input")
@@ -265,7 +362,6 @@ with stack_col1:
     if st.button("Clear Stack", key="stack_clear_btn"):
         st.session_state.my_stack = []
         st.error("Stack cleared.")
-
 with stack_col2:
     st.markdown("**Current Stack State (Top is at the end):**")
     if st.session_state.my_stack:
@@ -278,14 +374,12 @@ with stack_col2:
         st.write(f"**Current Size:** `{len(st.session_state.my_stack)}`")
     else:
         st.info("The stack is currently empty.")
-
 st.write("---")
 
 # --- 3. Queue (FIFO) ---
-st.header("3. Queue (FIFO - First In, First Out)")
+st.subheader("3. Queue (FIFO - First In, First Out)")
 st.markdown("A collection where elements are added to one end ('rear') and removed from the other end ('front'). Think of a waiting line.")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Queue (using `collections.deque`)"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements.
@@ -297,7 +391,6 @@ with st.expander("Time and Space Complexity for Queue (using `collections.deque`
     """)
 
 queue_col1, queue_col2 = st.columns([1, 3])
-
 with queue_col1:
     st.markdown("**Operations:**")
     new_queue_val = st.number_input("Value to Enqueue", value=random.randint(1, 100), key="queue_enqueue_input")
@@ -318,7 +411,6 @@ with queue_col1:
     if st.button("Clear Queue", key="queue_clear_btn"):
         st.session_state.my_queue.clear()
         st.error("Queue cleared.")
-
 with queue_col2:
     st.markdown("**Current Queue State (Front is on the left):**")
     if st.session_state.my_queue:
@@ -327,14 +419,113 @@ with queue_col2:
         st.write(f"**Current Size:** `{len(st.session_state.my_queue)}`")
     else:
         st.info("The queue is currently empty.")
-
 st.write("---")
 
-# --- 4. Priority Queue (Min-Heap) ---
-st.header("4. Priority Queue (Min-Heap Implementation)")
+# --- 4. Singly Linked List ---
+st.subheader("4. Singly Linked List")
+st.markdown("A sequence of nodes where each node contains data and a reference (link) to the next node in the sequence. Traversal is always from head to tail.")
+
+with st.expander("Time and Space Complexity for Singly Linked List"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ nodes.
+    * **Time Complexity:**
+        * **Access/Lookup by Index:** $O(N)$ (requires traversal)
+        * **Append (to Tail):** $O(N)$ (requires traversal to find tail)
+        * **Prepend (to Head):** $O(1)$
+        * **Insert (at specific index):** $O(N)$
+        * **Delete (by value or index):** $O(N)$ (requires traversal to find node and its predecessor)
+    """)
+
+sll_col1, sll_col2 = st.columns([1, 3])
+with sll_col1:
+    st.markdown("**Operations:**")
+    new_sll_val = st.number_input("Value to Add", value=random.randint(1, 100), key="sll_add_input")
+    if st.button("Append (Add to Tail)", key="sll_append_btn"):
+        st.session_state.my_singly_linked_list = sll_append(st.session_state.my_singly_linked_list, new_sll_val)
+        st.success(f"Appended {new_sll_val} to the list.")
+    if st.button("Prepend (Add to Head)", key="sll_prepend_btn"):
+        st.session_state.my_singly_linked_list = sll_prepend(st.session_state.my_singly_linked_list, new_sll_val)
+        st.success(f"Prepended {new_sll_val} to the list.")
+    
+    delete_sll_val = st.number_input("Value to Delete", value=random.randint(1, 100), key="sll_delete_input")
+    if st.button("Delete by Value", key="sll_delete_btn"):
+        initial_sll_elements = sll_to_list_representation(st.session_state.my_singly_linked_list)
+        st.session_state.my_singly_linked_list = sll_delete_by_value(st.session_state.my_singly_linked_list, delete_sll_val)
+        final_sll_elements = sll_to_list_representation(st.session_state.my_singly_linked_list)
+        if len(final_sll_elements) < len(initial_sll_elements):
+            st.info(f"Deleted {delete_sll_val} from the list.")
+        else:
+            st.warning(f"Value {delete_sll_val} not found in the list.")
+    
+    if st.button("Clear Linked List", key="sll_clear_btn"):
+        st.session_state.my_singly_linked_list = None
+        st.error("Singly Linked List cleared.")
+with sll_col2:
+    st.markdown("**Current Singly Linked List State:**")
+    if st.session_state.my_singly_linked_list:
+        st.code(sll_display_text(st.session_state.my_singly_linked_list))
+    else:
+        st.info("The Singly Linked List is currently empty.")
+st.write("---")
+
+# --- 5. Deque (Double-Ended Queue) ---
+st.subheader("5. Deque (Double-Ended Queue)")
+st.markdown("A generalization of a queue and stack, allowing elements to be added or removed from both ends.")
+
+with st.expander("Time and Space Complexity for Deque (using `collections.deque`)"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ elements.
+    * **Time Complexity:**
+        * **Append (`append`):** $O(1)$
+        * **Append Left (`appendleft`):** $O(1)$
+        * **Pop (`pop` - from right):** $O(1)$
+        * **Pop Left (`popleft` - from left):** $O(1)$
+        * **Peek (left/right):** $O(1)$
+    """)
+
+deque_col1, deque_col2 = st.columns([1, 3])
+with deque_col1:
+    st.markdown("**Operations:**")
+    new_deque_val = st.number_input("Value to Add", value=random.randint(1, 100), key="deque_add_input")
+    if st.button("Append (Add to Right)", key="deque_append_btn"):
+        st.session_state.my_deque.append(new_deque_val)
+        st.success(f"Appended {new_deque_val}.")
+    if st.button("Append Left (Add to Left)", key="deque_appendleft_btn"):
+        st.session_state.my_deque.appendleft(new_deque_val)
+        st.success(f"Appended left {new_deque_val}.")
+    
+    if st.button("Pop (Remove from Right)", key="deque_pop_btn"):
+        if st.session_state.my_deque:
+            popped_val = st.session_state.my_deque.pop()
+            st.info(f"Popped {popped_val} from right.")
+        else:
+            st.warning("Deque is empty!")
+    if st.button("Pop Left (Remove from Left)", key="deque_popleft_btn"):
+        if st.session_state.my_deque:
+            popped_val = st.session_state.my_deque.popleft()
+            st.info(f"Popped {popped_val} from left.")
+        else:
+            st.warning("Deque is empty!")
+    if st.button("Clear Deque", key="deque_clear_btn"):
+        st.session_state.my_deque.clear()
+        st.error("Deque cleared.")
+with deque_col2:
+    st.markdown("**Current Deque State (Left/Front on the left, Right/Rear on the right):**")
+    if st.session_state.my_deque:
+        deque_str = " <-> ".join(map(str, st.session_state.my_deque))
+        st.markdown(f"**LEFT** <-> `{deque_str}` <-> **RIGHT**")
+        st.write(f"**Current Size:** `{len(st.session_state.my_deque)}`")
+    else:
+        st.info("The Deque is currently empty.")
+st.write("---")
+
+st.header("Non-Linear Data Structures")
+st.write("---")
+
+# --- 6. Priority Queue (Min-Heap) ---
+st.subheader("6. Priority Queue (Min-Heap Implementation)")
 st.markdown("A collection where elements are served based on priority. Here, lower numbers have higher priority (Min-Heap).")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Priority Queue (Min-Heap)"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements.
@@ -345,7 +536,6 @@ with st.expander("Time and Space Complexity for Priority Queue (Min-Heap)"):
     """)
 
 pq_col1, pq_col2 = st.columns([1, 3])
-
 with pq_col1:
     st.markdown("**Operations:**")
     new_pq_val = st.number_input("Value to Insert (Priority)", value=random.randint(1, 100), key="pq_insert_input")
@@ -366,7 +556,6 @@ with pq_col1:
     if st.button("Clear Priority Queue", key="pq_clear_btn"):
         st.session_state.my_priority_queue = []
         st.error("Priority Queue cleared.")
-
 with pq_col2:
     st.markdown("**Current Priority Queue (Heap Array Representation):**")
     if st.session_state.my_priority_queue:
@@ -376,8 +565,7 @@ with pq_col2:
         st.subheader("Conceptual Tree View (for Heap):")
         st.markdown("*(Note: This is the underlying array. The tree structure maintains heap property.)*")
         st.write("```")
-        temp_heap = list(st.session_state.my_priority_queue) # make a copy
-        
+        temp_heap = list(st.session_state.my_priority_queue)
         level = 0
         idx = 0
         while idx < len(temp_heap):
@@ -387,17 +575,14 @@ with pq_col2:
             idx += nodes_at_level
             level += 1
         st.write("```")
-
     else:
         st.info("The Priority Queue is currently empty.")
-
 st.write("---")
 
-# --- 5. Binary Search Tree (BST) ---
-st.header("5. Binary Search Tree (BST)")
+# --- 7. Binary Search Tree (BST) ---
+st.subheader("7. Binary Search Tree (BST)")
 st.markdown("A tree-based data structure where values in the left subtree are smaller, and values in the right subtree are larger.")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Binary Search Tree"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements.
@@ -412,7 +597,6 @@ with st.expander("Time and Space Complexity for Binary Search Tree"):
     """)
 
 bst_col1, bst_col2 = st.columns([1, 3])
-
 with bst_col1:
     st.markdown("**Operations:**")
     new_bst_val = st.number_input("Value to Insert", value=random.randint(1, 100), key="bst_insert_input")
@@ -433,34 +617,33 @@ with bst_col1:
 
     delete_bst_val = st.number_input("Value to Delete", value=random.randint(1, 100), key="bst_delete_input")
     if st.button("Delete Node", key="bst_delete_btn"):
-        # For feedback, convert to dict before and after to check if deletion occurred
         original_bst_json = to_dict(st.session_state.my_bst)
         st.session_state.my_bst = delete_bst_node(st.session_state.my_bst, delete_bst_val)
         if to_dict(st.session_state.my_bst) != original_bst_json:
-            st.success(f"Deleted node with value {delete_bst_val}.")
+            st.info(f"Deleted node with value {delete_bst_val}.")
         else:
             st.warning(f"Node {delete_bst_val} not found or couldn't be deleted.")
 
     if st.button("Clear BST", key="bst_clear_btn"):
         st.session_state.my_bst = None
         st.error("Binary Search Tree cleared.")
-
 with bst_col2:
     st.markdown("**Current BST Structure (JSON representation):**")
     if st.session_state.my_bst:
-        st.json(to_dict(st.session_state.my_bst)) # Convert node object to dict for JSON display
+        st.json(to_dict(st.session_state.my_bst))
         st.subheader("Visualized Tree Structure (Simplified Text View):")
-        display_bst_node_text(st.session_state.my_bst) # Use the updated text display
+        display_bst_node_text(st.session_state.my_bst)
     else:
         st.info("The Binary Search Tree is currently empty. Insert a node to start building it!")
-
 st.write("---")
 
-# --- 6. Hash Table (with Chaining) ---
-st.header("6. Hash Table (with Simple Chaining)")
+st.header("Hashing Data Structures")
+st.write("---")
+
+# --- 8. Hash Table (with Chaining) ---
+st.subheader("8. Hash Table (with Simple Chaining)")
 st.markdown("Maps keys to values using a hash function. Collisions are handled by storing multiple key-value pairs in a 'chain' (list) within each bucket.")
 
-# Complexity Expander
 with st.expander("Time and Space Complexity for Hash Table (with Chaining)"):
     st.markdown("""
     * **Space Complexity:** $O(N)$ for storing $N$ elements (plus $O(M)$ for $M$ buckets, where $M$ is table size).
@@ -475,12 +658,9 @@ with st.expander("Time and Space Complexity for Hash Table (with Chaining)"):
     """)
 
 hash_table_col1, hash_table_col2 = st.columns([1, 3])
-
 with hash_table_col1:
     st.markdown("**Operations:**")
-    st.session_state.hash_table_size = st.slider("Number of Buckets", 5, 20, 10, 1, key="hash_table_buckets")
-    
-    # Re-initialize hash table if size changes (clears existing data)
+    st.session_state.hash_table_size = st.slider("Number of Buckets", 5, 20, st.session_state.hash_table_size, 1, key="hash_table_buckets")
     if len(st.session_state.my_hash_table) != st.session_state.hash_table_size:
         st.session_state.my_hash_table = [[] for _ in range(st.session_state.hash_table_size)]
         st.info(f"Hash table re-initialized with {st.session_state.hash_table_size} buckets.")
@@ -514,10 +694,9 @@ with hash_table_col1:
     if st.button("Clear Hash Table", key="hash_clear_btn"):
         st.session_state.my_hash_table = [[] for _ in range(st.session_state.hash_table_size)]
         st.error("Hash Table cleared.")
-
 with hash_table_col2:
     st.markdown("**Current Hash Table State (Buckets):**")
-    if any(st.session_state.my_hash_table): # Check if any bucket has data
+    if any(st.session_state.my_hash_table):
         for i, bucket in enumerate(st.session_state.my_hash_table):
             bucket_content = f"Bucket {i}: "
             if bucket:
@@ -527,6 +706,71 @@ with hash_table_col2:
             st.markdown(f"**`{bucket_content}`**")
     else:
         st.info("The Hash Table is currently empty.")
-
 st.write("---")
+
+# --- 9. Hash Set (with Chaining) ---
+st.subheader("9. Hash Set (with Simple Chaining)")
+st.markdown("Stores unique elements (keys only) using a hash function. Ideal for checking presence quickly.")
+
+with st.expander("Time and Space Complexity for Hash Set (with Chaining)"):
+    st.markdown("""
+    * **Space Complexity:** $O(N)$ for storing $N$ unique elements.
+    * **Time Complexity (Average Case):**
+        * **Add:** $O(1)$
+        * **Remove:** $O(1)$
+        * **Contains:** $O(1)$
+    * **Time Complexity (Worst Case - All collisions):**
+        * **Add:** $O(N)$
+        * **Remove:** $O(N)$
+        * **Contains:** $O(N)$
+    """)
+
+hash_set_col1, hash_set_col2 = st.columns([1, 3])
+with hash_set_col1:
+    st.markdown("**Operations:**")
+    st.session_state.hash_set_size = st.slider("Number of Buckets (for Set)", 5, 20, st.session_state.hash_set_size, 1, key="hash_set_buckets")
+    if len(st.session_state.my_hash_set) != st.session_state.hash_set_size:
+        st.session_state.my_hash_set = [[] for _ in range(st.session_state.hash_set_size)]
+        st.info(f"Hash set re-initialized with {st.session_state.hash_set_size} buckets.")
+
+    set_key = st.text_input("Key to Manage (String)", value=f"item_{random.randint(1, 100)}", key="hash_set_key_input")
+
+    if st.button("Add Key", key="hash_set_add_btn"):
+        msg = hash_set_add(st.session_state.my_hash_set, set_key, st.session_state.hash_set_size)
+        st.success(msg)
+
+    if st.button("Remove Key", key="hash_set_remove_btn"):
+        msg = hash_set_remove(st.session_state.my_hash_set, set_key, st.session_state.hash_set_size)
+        if "removed" in msg:
+            st.info(msg)
+        else:
+            st.warning(msg)
+            
+    if st.button("Check if Contains Key", key="hash_set_contains_btn"):
+        found, path = hash_set_contains(st.session_state.my_hash_set, set_key, st.session_state.hash_set_size)
+        if found:
+            st.success(f"Key '{set_key}' IS in the set!")
+        else:
+            st.warning(f"Key '{set_key}' IS NOT in the set.")
+        with st.expander("Contains Check Details"):
+            for step in path:
+                st.write(step)
+    
+    if st.button("Clear Hash Set", key="hash_set_clear_btn"):
+        st.session_state.my_hash_set = [[] for _ in range(st.session_state.hash_set_size)]
+        st.error("Hash Set cleared.")
+with hash_set_col2:
+    st.markdown("**Current Hash Set State (Buckets with Keys):**")
+    if any(st.session_state.my_hash_set):
+        for i, bucket in enumerate(st.session_state.my_hash_set):
+            bucket_content = f"Bucket {i}: "
+            if bucket:
+                bucket_content += " -> ".join([f"'{k}'" for k in bucket])
+            else:
+                bucket_content += "(empty)"
+            st.markdown(f"**`{bucket_content}`**")
+    else:
+        st.info("The Hash Set is currently empty.")
+st.write("---")
+
 st.markdown("Created with Streamlit for Advanced Data Structure Visualization")
