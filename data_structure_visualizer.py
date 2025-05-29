@@ -204,7 +204,7 @@ def display_bst_node_text(node, prefix="", is_left=None):
 
         st.write(f"{prefix}{connector}**{node.value}**")
         
-        new_prefix = prefix + ("│   " if is_left is not False else "    ") 
+        new_prefix = prefix + ("│    " if is_left is not False else "     ") 
 
         if node.left:
             display_bst_node_text(node.left, new_prefix, True)
@@ -760,7 +760,7 @@ with hash_set_col1:
         st.session_state.my_hash_set = [[] for _ in range(st.session_state.hash_set_size)]
         st.error("Hash Set cleared.")
 with hash_set_col2:
-    st.markdown("**Current Hash Set State (Buckets with Keys):**")
+    st.markdown("**Current Hash Set State (Buckets):**")
     if any(st.session_state.my_hash_set):
         for i, bucket in enumerate(st.session_state.my_hash_set):
             bucket_content = f"Bucket {i}: "
@@ -772,5 +772,3 @@ with hash_set_col2:
     else:
         st.info("The Hash Set is currently empty.")
 st.write("---")
-
-st.markdown("Created with Streamlit for Advanced Data Structure Visualization")
