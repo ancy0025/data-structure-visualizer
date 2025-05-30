@@ -1,179 +1,368 @@
 import streamlit as st
-import pandas as pd
+import pandas as pd # Used for the array visualization, generally useful
+import graphviz # For visualizing Linked Lists and Binary Search Trees
 
-# Set page configuration for a wider layout
-st.set_page_config(layout="wide", page_title="Memory Hierarchy Visualizer")
+# --- Helper Functions for Binary Search Tree (BST) ---
+# This class defines a node in our BST.
+class BSTNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
 
-st.title("🗃️ Computer Memory Hierarchy Visualizer")
+# This function inserts a new value into the BST.
+def insert_bst_node(root, value):
+    if root is None:
+        return BSTNode(value)
+    if value < root.value:
+        root.left = insert_bst_node(root.left, value)
+    elif value > root.value: # No duplicates for simplicity
+        root.right = insert_bst_node(root.right, value)
+    return root
 
+# This function generates the 'dot' language string for Graphviz to draw the BST.
+def generate_bst_dot(node, dot_str=""):
+    if node is None:
+        return dot_str
+    # Define the node in Graphviz
+    dot_str += f'    node{node.value} [label="{node.value}"];\n'
+    # Add edges to children
+    if node.left:
+        dot_str += f'    node{node.value} -> node{node.left.value} [label="L", color="darkgreen"];\n'
+        dot_str = generate_bst_dot(node.left, dot_str)
+    if node.right:
+        dot_str += f'    node{node.value} -> node{node.right.value} [label="R", color="darkred"];\n'
+        dot_str = generate_bst_dot(node.right, dot_str)
+    return dot_str
+
+# --- Streamlit App Setup ---
+st.set_page_config(layout="wide", page_title="Data Structure Visualizer")
+
+st.title("📊 Interactive Data Structure Visualizer")
 st.write("""
-This application illustrates the hierarchical structure of computer memory,
-highlighting the fundamental trade-offs between **speed**, **size**, and **cost**.
-Understanding this hierarchy is essential for optimizing software performance
-and comprehending how modern computer systems operate.
+This application helps you understand fundamental **data structures** by letting you interact with them and see their visualizations.
+Use the **sidebar** to select a data structure and its operations.
 """)
 
-# --- Data Definition for Memory Levels ---
-# Using a dictionary for structured data
-memory_data = {
-    "Level": [
-        "Registers",
-        "L1 Cache",
-        "L2 Cache",
-        "L3 Cache",
-        "Main Memory (RAM)",
-        "Secondary Storage (SSD/HDD)"
-    ],
-    "Typical Size": [
-        "Few Bytes (e.g., 32-256 bytes)",
-        "Tens to Hundreds of KB (e.g., 32KB - 512KB per core)",
-        "Hundreds of KB to MBs (e.g., 256KB - 8MB per core/shared)",
-        "Several MBs (e.g., 4MB - 64MB, shared)",
-        "Gigabytes (e.g., 8GB - 128GB)",
-        "Terabytes (e.g., 500GB - 16TB+)"
-    ],
-    "Access Speed (Approx. Latency)": [
-        "0.1 - 1 ns (CPU Cycle)",
-        "0.5 - 5 ns",
-        "5 - 20 ns",
-        "20 - 60 ns",
-        "50 - 100 ns",
-        "100 µs - 1 ms (SSD) / 1 - 10 ms (HDD)" # µs = microseconds, ms = milliseconds
-    ],
-    "Cost per bit (Relative)": [
-        "Highest",
-        "Very High",
-        "High",
-        "Medium-High",
-        "Medium",
-        "Lowest"
-    ],
-    "Volatility": [
-        "Volatile (data lost on power off)",
-        "Volatile",
-        "Volatile",
-        "Volatile",
-        "Volatile",
-        "Non-Volatile (data persists on power off)"
-    ],
-    "Distance from CPU": [
-        "Inside CPU die",
-        "Inside CPU die (closest)",
-        "Inside CPU die (close)",
-        "On CPU die (further)",
-        "External chip (motherboard)",
-        "External drive (separate device)"
-    ]
-}
+# --- Initialize Session State for Data Structures ---
+# Session state ensures that the data persists across user interactions.
+if 'array_data' not in st.session_state:
+    st.session_state.array_data = []
+if 'linked_list_nodes' not in st.session_state:
+    st.session_state.linked_list_nodes = [] # Stores (value, unique_id) for Graphviz
+if 'stack_data' not in st.session_state:
+    st.session_state.stack_data = []
+if 'queue_data' not in st.session_state:
+    st.session_state.queue_data = []
+if 'bst_root' not in st.session_state:
+    st.session_state.bst_root = None # Stores the root node of the BST
 
-df = pd.DataFrame(memory_data)
+# --- Sidebar for Navigation ---
+st.sidebar.header("Select Data Structure")
+selected_ds = st.sidebar.radio(
+    "Choose a structure to visualize:",
+    ("Array/List", "Linked List", "Stack", "Queue", "Binary Search Tree")
+)
+
+st.sidebar.markdown("---")
+st.sidebar.info("Use the controls below to interact with the selected data structure.")
+
+# --- Main Content Area based on Selection ---
+
+# --- Array/List Visualization ---
+if selected_ds == "Array/List":
+    st.header("1. Array / List")
+    st.write("""
+    An **Array** (or **List** in Python) is a collection of items stored at **contiguous memory locations**.
+    It's one of the simplest and most fundamental data structures, providing **direct access** to elements using their index.
+    """)
+
+    st.subheader("Key Properties:")
+    st.markdown("""
+    * **Contiguous Memory:** Elements are stored in a single, unbroken block of memory.
+    * **Direct Access (by Index):** You can access any element very quickly ($O(1)$) by knowing its position (index).
+    * **Dynamic Sizing (Python Lists):** Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
+    * **Insertion/Deletion (Middle):** Inserting or deleting elements in the middle can be slow ($O(N)$) because subsequent elements might need to be shifted.
+    """)
+
+    st.subheader("Interactive Example:")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Controls")
+        new_element = st.text_input("Enter element to add:", key="array_input")
+        if st.button("Add Element to End", key="add_array_btn"):
+            if new_element:
+                st.session_state.array_data.append(new_element)
+                st.session_state.array_input = "" # Clear input box
+            else:
+                st.warning("Please enter an element to add.")
+        if st.button("Clear Array", key="clear_array_btn"):
+            st.session_state.array_data = []
+            st.info("Array cleared!")
+
+    with col2:
+        st.subheader("Visualization")
+        if st.session_state.array_data:
+            # Display using columns for a clear indexed view
+            cols_viz = st.columns(len(st.session_state.array_data))
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Array Elements:</p>", unsafe_allow_html=True)
+            for i, val in enumerate(st.session_state.array_data):
+                with cols_viz[i]:
+                    st.markdown(f"<div style='border: 1px solid #ddd; padding: 10px; margin: 5px; text-align: center; background-color: #e0f7fa; border-radius: 5px;'><b>[{i}]</b><br>{val}</div>", unsafe_allow_html=True)
+            st.write(f"**Current Size:** {len(st.session_state.array_data)} elements")
+        else:
+            st.info("Array is empty. Add some elements to visualize!")
+
+# --- Linked List Visualization ---
+elif selected_ds == "Linked List":
+    st.header("2. Linked List (Singly)")
+    st.write("""
+    A **Linked List** is a linear collection of data elements, called **nodes**, where each node
+    contains data and a **pointer** (or reference) to the **next node** in the sequence.
+    Elements are **not necessarily contiguous** in memory.
+    """)
+
+    st.subheader("Key Properties:")
+    st.markdown("""
+    * **Non-Contiguous Memory:** Nodes can be scattered throughout memory, connected by pointers.
+    * **Dynamic Size:** Easily grows or shrinks as needed without requiring large contiguous blocks.
+    * **Efficient Insertion/Deletion (Known Node):** Adding or removing elements is fast ($O(1)$) if you have a reference to the node before the insertion/deletion point.
+    * **Inefficient Random Access:** To find an element by its position, you must traverse the list from the beginning ($O(N)$).
+    """)
+
+    st.subheader("Interactive Example:")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Controls")
+        ll_element = st.text_input("Enter element to add (at end):", key="ll_input")
+        if st.button("Add Element to End", key="add_ll_btn"):
+            if ll_element:
+                node_id = len(st.session_state.linked_list_nodes) # Unique ID for Graphviz nodes
+                st.session_state.linked_list_nodes.append((ll_element, node_id))
+                st.session_state.ll_input = "" # Clear input
+            else:
+                st.warning("Please enter an element.")
+        if st.button("Remove from Front", key="remove_ll_btn"):
+            if st.session_state.linked_list_nodes:
+                removed_val, _ = st.session_state.linked_list_nodes.pop(0) # Remove the first element
+                st.success(f"Removed: {removed_val}")
+            else:
+                st.warning("Linked List is empty. Cannot remove.")
+        if st.button("Clear Linked List", key="clear_ll_btn"):
+            st.session_state.linked_list_nodes = []
+            st.info("Linked List cleared!")
+
+    with col2:
+        st.subheader("Visualization")
+        if st.session_state.linked_list_nodes:
+            # Generate Graphviz DOT language code
+            dot_code = 'digraph G {\n rankdir="LR"; node [shape=record, style=filled, fillcolor="#FFECB3", fontname="Arial"];\n edge [arrowhead=normal, color="#FF9800", penwidth=1.5];\n'
+            for i, (val, node_id) in enumerate(st.session_state.linked_list_nodes):
+                next_ptr_target = ""
+                if i + 1 < len(st.session_state.linked_list_nodes):
+                    next_ptr_target = f"node{st.session_state.linked_list_nodes[i+1][1]}:f0"
+                else:
+                    next_ptr_target = "null_node" # Point to a visual NULL
+
+                dot_code += f'    node{node_id} [label="<f0> {val} | <f1> "];\n'
+                if next_ptr_target: # Only draw edge if there's a next node or a null
+                    dot_code += f'    node{node_id}:f1 -> {next_ptr_target};\n'
+
+            dot_code += '    null_node [shape=plaintext, label="NULL", fontcolor="red"];\n' # Define NULL visually
+            dot_code += '}\n'
+            st.graphviz_chart(dot_code)
+            st.write(f"**Current Size:** {len(st.session_state.linked_list_nodes)} nodes")
+        else:
+            st.info("Linked List is empty. Add some elements to visualize!")
+
+# --- Stack Visualization ---
+elif selected_ds == "Stack":
+    st.header("3. Stack")
+    st.write("""
+    A **Stack** is a linear data structure that follows the **LIFO (Last In, First Out)** principle.
+    Imagine a stack of plates: the last plate you put on is always the first one you take off.
+    """)
+
+    st.subheader("Key Properties:")
+    st.markdown("""
+    * **LIFO (Last In, First Out):** The most recently added element is the first one to be removed.
+    * **Primary Operations:**
+        * **`push()`:** Adds an element to the top of the stack.
+        * **`pop()`:** Removes and returns the top element from the stack.
+        * **`peek()` / `top()`:** Returns the top element without removing it.
+    * **Applications:** Function call stacks in programming, undo/redo features, expression evaluation.
+    """)
+
+    st.subheader("Interactive Example:")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Controls")
+        stack_element = st.text_input("Enter element to push:", key="stack_input")
+        if st.button("Push (Add to Top)", key="push_stack_btn"):
+            if stack_element:
+                st.session_state.stack_data.append(stack_element)
+                st.session_state.stack_input = ""
+            else:
+                st.warning("Please enter an element to push.")
+        if st.button("Pop (Remove from Top)", key="pop_stack_btn"):
+            if st.session_state.stack_data:
+                popped_val = st.session_state.stack_data.pop()
+                st.success(f"Popped: **{popped_val}**")
+            else:
+                st.warning("Stack is empty. Cannot pop.")
+        if st.button("Clear Stack", key="clear_stack_btn"):
+            st.session_state.stack_data = []
+            st.info("Stack cleared!")
+
+    with col2:
+        st.subheader("Visualization")
+        if st.session_state.stack_data:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Stack (TOP is highest):</p>", unsafe_allow_html=True)
+            # Display from top to bottom
+            for i, val in enumerate(reversed(st.session_state.stack_data)):
+                if i == 0: # This is the top element
+                    st.markdown(f"<div style='border: 2px solid #4CAF50; padding: 10px; margin: 2px auto; text-align: center; background-color: #e8f5e9; border-radius: 5px; width: 50%;'><b>{val}</b> <span style='font-size: 0.8em; color: green;'>(TOP)</span></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div style='border: 1px solid #ccc; padding: 10px; margin: 2px auto; text-align: center; background-color: #f0f0f0; border-radius: 5px; width: 50%;'>{val}</div>", unsafe_allow_html=True)
+            st.markdown("<div style='border-top: 3px double #333; margin: 5px auto; width: 50%;'></div>", unsafe_allow_html=True) # Bottom of the stack
+            st.write(f"**Current Size:** {len(st.session_state.stack_data)} elements")
+        else:
+            st.info("Stack is empty. Push some elements to visualize!")
+
+# --- Queue Visualization ---
+elif selected_ds == "Queue":
+    st.header("4. Queue")
+    st.write("""
+    A **Queue** is a linear data structure that follows the **FIFO (First In, First Out)** principle.
+    Think of a line of people waiting for a service: the first person to join the line is the first one served.
+    """)
+
+    st.subheader("Key Properties:")
+    st.markdown("""
+    * **FIFO (First In, First Out):** The first element added is the first one to be removed.
+    * **Primary Operations:**
+        * **`enqueue()`:** Adds an element to the **rear** (back) of the queue.
+        * **`dequeue()`:** Removes and returns the element from the **front** of the queue.
+        * **`front()` / `peek()`:** Returns the front element without removing it.
+    * **Applications:** Printer job scheduling, CPU scheduling, breadth-first search algorithms.
+    """)
+
+    st.subheader("Interactive Example:")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Controls")
+        queue_element = st.text_input("Enter element to enqueue:", key="queue_input")
+        if st.button("Enqueue (Add to Rear)", key="enqueue_queue_btn"):
+            if queue_element:
+                st.session_state.queue_data.append(queue_element)
+                st.session_state.queue_input = ""
+            else:
+                st.warning("Please enter an element to enqueue.")
+        if st.button("Dequeue (Remove from Front)", key="dequeue_queue_btn"):
+            if st.session_state.queue_data:
+                dequeued_val = st.session_state.queue_data.pop(0) # Python list pop(0) removes from front
+                st.success(f"Dequeued: **{dequeued_val}**")
+            else:
+                st.warning("Queue is empty. Cannot dequeue.")
+        if st.button("Clear Queue", key="clear_queue_btn"):
+            st.session_state.queue_data = []
+            st.info("Queue cleared!")
+
+    with col2:
+        st.subheader("Visualization")
+        if st.session_state.queue_data:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Queue (FRONT is left, REAR is right):</p>", unsafe_allow_html=True)
+            # Custom CSS for better visualization of queue elements
+            st.markdown("""
+            <style>
+            .queue-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-top: 10px;
+            }
+            .queue-element {
+                border: 1px solid #64B5F6; /* Light Blue */
+                background-color: #E3F2FD; /* Lighter Blue */
+                padding: 10px 15px;
+                margin: 5px;
+                border-radius: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 50px;
+                box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            }
+            .queue-arrow {
+                font-size: 1.5em;
+                margin: 0 5px;
+                color: #424242;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+            html_display = "<div class='queue-container'>"
+            if st.session_state.queue_data:
+                html_display += "<span class='queue-arrow'>FRONT &larr;</span>"
+                for i, val in enumerate(st.session_state.queue_data):
+                    html_display += f"<div class='queue-element'>{val}</div>"
+                    if i < len(st.session_state.queue_data) - 1:
+                        html_display += "<span class='queue-arrow'>&rarr;</span>"
+                html_display += "<span class='queue-arrow'>&rarr; REAR</span>"
+            html_display += "</div>"
+            st.markdown(html_display, unsafe_allow_html=True)
+            st.write(f"**Current Size:** {len(st.session_state.queue_data)} elements")
+        else:
+            st.info("Queue is empty. Enqueue some elements to visualize!")
+
+# --- Binary Search Tree Visualization ---
+elif selected_ds == "Binary Search Tree":
+    st.header("5. Binary Search Tree (BST)")
+    st.write("""
+    A **Binary Search Tree (BST)** is a tree-based data structure where each node has at most two children
+    (a left child and a right child). It maintains a specific ordering property:
+    * All values in the **left subtree** of a node are **smaller** than the node's value.
+    * All values in the **right subtree** of a node are **larger** than the node's value.
+    """)
+
+    st.subheader("Key Properties:")
+    st.markdown("""
+    * **Ordered Structure:** This property allows for efficient searching.
+    * **Efficient Search, Insertion, Deletion:** In a balanced BST, these operations take $O(\log N)$ time on average. In the worst-case (e.g., inserting sorted numbers), it can degrade to $O(N)$, resembling a linked list.
+    * **No Duplicates:** Typically, BSTs do not allow duplicate values.
+    * **Applications:** Implementing dictionaries/maps, priority queues, efficient sorting.
+    """)
+
+    st.subheader("Interactive Example:")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Controls")
+        bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key="bst_input")
+        if st.button("Insert Value", key="insert_bst_btn"):
+            if bst_value is not None:
+                st.session_state.bst_root = insert_bst_node(st.session_state.bst_root, int(bst_value))
+                st.session_state.bst_input = None # Clear input (resets to default value)
+                st.success(f"Inserted: **{int(bst_value)}**")
+            else:
+                st.warning("Please enter an integer value to insert.")
+        if st.button("Clear BST", key="clear_bst_btn"):
+            st.session_state.bst_root = None
+            st.info("BST cleared!")
+
+    with col2:
+        st.subheader("Visualization")
+        if st.session_state.bst_root:
+            # Generate Graphviz DOT code for the current BST
+            dot_code = 'digraph G {\n rankdir="TB"; node [shape=circle, style=filled, fillcolor="#C8E6C9", fontname="Arial"];\n edge [color="#388E3C"];\n'
+            dot_code = generate_bst_dot(st.session_state.bst_root, dot_code)
+            dot_code += '}\n'
+            st.graphviz_chart(dot_code)
+        else:
+            st.info("BST is empty. Insert some integer values to visualize!")
+
+st.sidebar.markdown("---")
+st.sidebar.caption("Data Structure Visualizer v1.0")
 
 st.markdown("---")
-st.header("1. Memory Hierarchy Diagram")
-
-st.write("This diagram illustrates the flow of data requests from the CPU down to the slower, larger storage levels.")
-st.graphviz_chart('''
-    digraph memory_hierarchy {
-        rankdir=TB; # Top-to-Bottom ranking
-        node [shape=box, style=filled, fillcolor="#ADD8E6", fontname="Arial", fontsize=12]; # Light Blue nodes
-        edge [arrowhead=normal, style=bold, color="#4682B4", penwidth=1.5]; # Steel Blue edges
-
-        # Define Nodes
-        CPU [label="CPU\n(Processor)", shape=parallelogram, fillcolor="#FFD700"]; # Gold for CPU
-        Registers [label="Registers\n(Fastest, Smallest)", fillcolor="#90EE90"]; # Light Green
-        L1_Cache [label="L1 Cache\n(SRAM)"];
-        L2_Cache [label="L2 Cache\n(SRAM)"];
-        L3_Cache [label="L3 Cache\n(SRAM)"];
-        Main_Memory [label="Main Memory\n(DRAM)", fillcolor="#F08080"]; # Light Coral
-        Secondary_Storage [label="Secondary Storage\n(SSD/HDD, Slowest, Largest)", fillcolor="#D3D3D3"]; # Light Grey
-
-        # Define Connections (Hierarchy Flow)
-        CPU -> Registers [label="Direct Access"];
-        Registers -> L1_Cache [label="Data Path/Next Level"];
-        L1_Cache -> L2_Cache [label="Hierarchical Access"];
-        L2_Cache -> L3_Cache [label="Hierarchical Access"];
-        L3_Cache -> Main_Memory [label="Hierarchical Access"];
-        Main_Memory -> Secondary_Storage [label="Page Swapping/File I/O"];
-
-        # Grouping (optional, but helps with layout)
-        {rank=same; CPU; Registers;}
-        {rank=same; L1_Cache; L2_Cache; L3_Cache;}
-        {rank=same; Main_Memory;}
-        {rank=same; Secondary_Storage;}
-
-        # Legend/Principles
-        subgraph cluster_principles {
-            label="Key Principles";
-            style=dashed;
-            color="#696969"; # Dark Grey
-            node [shape=note, fillcolor="#FFFACD", fontname="Arial", fontsize=10]; # Lemon Chiffon
-            principle1 [label="Closer to CPU:\nFaster, Smaller, More Expensive"];
-            principle2 [label="Farther from CPU:\nSlower, Larger, Cheaper"];
-            principle3 [label="Locality of Reference\n(Temporal & Spatial)"];
-            principle4 [label="Caching:\nMaintains copies of data from lower levels"];
-        }
-    }
-''')
-
-st.markdown("---")
-st.header("2. Detailed Characteristics of Each Memory Level")
-st.write("This table provides a comprehensive overview of each memory level's properties.")
-st.dataframe(df.set_index("Level"), use_container_width=True)
-
-st.markdown("---")
-st.header("3. Understanding the Hierarchy: Key Principles")
-st.markdown("""
-The memory hierarchy is a fundamental concept in computer architecture designed to bridge the immense speed gap
-between the lightning-fast CPU and relatively slower, but much larger and cheaper, storage devices.
-It leverages several key principles:
-
-* **Locality of Reference:** This is the cornerstone. Programs tend to access data and instructions that are:
-    * **Temporal Locality:** Recently accessed items are likely to be accessed again soon.
-    * **Spatial Locality:** Items whose addresses are close to a recently accessed item are likely to be accessed soon.
-    Caches exploit this by bringing blocks of data (not just single bytes) into faster memory.
-* **Caching:** Faster, smaller memory levels (like L1, L2, L3 caches) store copies of data from slower,
-    larger memory levels. When the CPU needs data, it first checks the fastest cache.
-    * **Cache Hit:** If the data is found, it's retrieved very quickly.
-    * **Cache Miss:** If not found, the data is fetched from the next slower level, brought into the current cache,
-        and then provided to the CPU. This process continues down the hierarchy.
-* **Trade-offs:** Every level in the hierarchy represents a balance:
-    * **Speed vs. Capacity:** Faster memory is generally smaller in capacity.
-    * **Speed vs. Cost:** Faster memory is significantly more expensive per bit.
-    The hierarchy optimizes overall system performance and cost by providing multiple levels of memory with varying characteristics.
-""")
-
-st.markdown("---")
-st.header("4. Real-World Examples & Impact")
-st.markdown("""
-To better understand the memory hierarchy, let's look at how it affects your everyday computer usage:
-
-* **Analogy: The Chef's Kitchen 👨‍🍳**
-    * **CPU:** The Chef (the worker).
-    * **Registers:** The ingredients currently in the Chef's hands or on the cutting board (immediate use, tiny amount, super fast).
-    * **L1/L2 Cache:** The small spice rack (L1) right next to the cutting board, and the pantry (L2) a few steps away in the kitchen (frequently used ingredients, fast access).
-    * **L3 Cache:** The walk-in refrigerator (L3) just outside the kitchen door (larger, takes a short walk, shared by multiple chefs).
-    * **Main Memory (RAM):** The main grocery store in town (much larger, but requires leaving the kitchen and traveling). All the ingredients you've bought for today's dishes are here.
-    * **Secondary Storage (SSD/HDD):** The vast warehouse on the outskirts of the city where all raw ingredients are stored (enormous capacity, but takes a long time to get anything). This is where you store ingredients you might need next month.
-
-* **Opening an Application (e.g., a Web Browser):**
-    * When you click the browser icon, its program code and initial data are loaded from **Secondary Storage (SSD/HDD)** into **Main Memory (RAM)**. This is why apps take time to launch.
-    * As you interact with the browser, frequently used parts of its code and data (e.g., your Browse history, currently open tabs) are moved from RAM into **L3, L2, and L1 Caches** for quick access by the **CPU**.
-
-* **Browse a Website (Scrolling):**
-    * When you scroll down a long web page, the browser predicts you'll need the next section of content. This "pre-fetching" leverages **spatial locality**, bringing data from **RAM** into **cache** before the **CPU** even explicitly requests it. This makes scrolling feel smooth.
-
-* **Playing a Game:**
-    * The game's executable and large assets (textures, models) reside on **Secondary Storage**.
-    * The actively loaded level, characters, and currently used game data are in **Main Memory (RAM)**.
-    * The very specific instructions and small data sets the **CPU** needs *right now* (e.g., calculating character movement, rendering a specific frame) are brought into **cache**. A "cache miss" (CPU needing data not in cache) can cause micro-stutters.
-
-* **Running Out of RAM ("System Slows Down"):**
-    * If you open too many programs or large files, your **Main Memory (RAM)** might become full.
-    * The operating system then has to temporarily move (swap) data from RAM back to **Secondary Storage (SSD/HDD)** to free up space. This is called **virtual memory** or "paging."
-    * Accessing data from disk is thousands to millions of times slower than RAM, leading to a noticeable slowdown, often indicated by disk activity lights flickering constantly.
-
-Understanding this hierarchy helps you appreciate why more RAM often improves multitasking, why SSDs feel much faster than HDDs, and why a CPU with a larger cache can perform better in certain tasks.
-""")
-
-st.markdown("---")
-st.info("Developed by [Your Name/Organization Name] for educational purposes. Feel free to explore and learn!")
+st.info("This application is designed for educational purposes to demonstrate basic data structure concepts and operations. For robust, production-ready data structure implementations, consider using Python's built-in types (like `list`, `dict`) or specialized libraries.")
