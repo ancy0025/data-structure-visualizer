@@ -4,6 +4,10 @@ import collections # For deque and defaultdict
 import heapq # For heap (Priority Queue)
 import hashlib # For Bloom Filter
 
+# --- Configuration ---
+# st.set_page_config() must be the first Streamlit command called.
+st.set_page_config(page_title="Comprehensive Data Structure Explorer", layout="wide")
+
 # --- Helper Functions and Classes for Data Structures ---
 
 # --- Linear Data Structures ---
@@ -848,8 +852,7 @@ def reset_all_data_structures():
 st.sidebar.button("Reset All Data Structures", on_click=reset_all_data_structures)
 st.sidebar.markdown("---")
 
-# --- Configuration ---
-st.set_page_config(page_title="Comprehensive Data Structure Explorer", layout="wide")
+
 st.title("📚 Comprehensive Interactive Data Structure Explorer")
 st.markdown("Explore the behavior, operations, and complexities of various fundamental and advanced data structures.")
 
