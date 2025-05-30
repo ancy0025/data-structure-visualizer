@@ -754,7 +754,7 @@ class LRUCache:
         prev_node = node.prev
         next_node = node.next
         prev_node.next = next_node
-        next_node.prev = prev_node
+        next_node.prev = next_node
 
     def _move_to_front(self, node):
         self._remove_node(node)
@@ -867,7 +867,7 @@ ds_categories = {
         "B-Tree / B+ Tree", "Heap (Min-Heap, Max-Heap)", "Segment Tree", "Fenwick Tree (Binary Indexed Tree)",
         "Trie (Prefix Tree)", "Graph", "Directed / Undirected Graph", "Weighted / Unweighted Graph", "Adjacency Matrix / Adjacency List", "Tree as a special type of graph"
     ],
-    "🔹 Hashing Data Structures": [
+    "� Hashing Data Structures": [
         "Hash Table", "Hash Map / Dictionary", "Hash Set"
     ],
     "🔸 Specialized or Advanced Data Structures": [
@@ -2267,3 +2267,4 @@ elif selected_ds_option == "Bag / Multibag (ADT)":
 # Streamlit's radio button behavior means they are clickable but don't lead to specific content.
 # This is a limitation of using a single radio for both categories and items.
 # A multi-page app structure would be cleaner for category navigation, but this fulfills the "exact order" request.
+�
