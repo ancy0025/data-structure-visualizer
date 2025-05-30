@@ -1,980 +1,519 @@
-import collections
+import streamlit as st
+import time
 import random
-import hashlib
 
-# --- Linear Data Structures ---
-
-# Doubly Linked List
-class DoublyLinkedListNode:
-    def __init__(self, value):
-        self.value = value
+# --- Data Structures and Their Representations ---
+class Node:
+    def __init__(self, data):
+        self.data = data
         self.next = None
         self.prev = None
+        self.left = None
+        self.right = None
 
-    def __repr__(self):
-        return f"Node({self.value})"
-
-class DoublyLinkedList:
-    def __init__(self):
-        self.head = None
-        self.tail = None
-        self.size = 0
-
-    def append(self, value):
-        new_node = DoublyLinkedListNode(value)
-        if not self.head:
-            self.head = self.tail = new_node
+def create_linked_list(values):
+    head = None
+    tail = None
+    for value in values:
+        new_node = Node(value)
+        if not head:
+            head = new_node
+            tail = new_node
         else:
-            self.tail.next = new_node
-            new_node.prev = self.tail
-            self.tail = new_node
-        self.size += 1
-        print(f"Appended {value}. List state:")
-        self.display()
+            tail.next = new_node
+            tail = new_node
+    return head
 
-    def prepend(self, value):
-        new_node = DoublyLinkedListNode(value)
-        if not self.head:
-            self.head = self.tail = new_node
+def create_doubly_linked_list(values):
+    head = None
+    tail = None
+    for value in values:
+        new_node = Node(value)
+        if not head:
+            head = new_node
+            tail = new_node
         else:
-            new_node.next = self.head
-            self.head.prev = new_node
-            self.head = new_node
-        self.size += 1
-        print(f"Prepended {value}. List state:")
-        self.display()
+            tail.next = new_node
+            new_node.prev = tail
+            tail = new_node
+    return head
 
-    def delete_by_value(self, value):
-        if not self.head:
-            print("List is empty. Cannot delete.")
-            return
+def create_binary_tree(values):
+    if not values:
+        return None
+    root = Node(values[0])
+    nodes = [root]
+    i = 1
+    while i < len(values):
+        node = nodes.pop(0)
+        if i < len(values):
+            if values[i] is not None:
+                node.left = Node(values[i])
+                nodes.append(node.left)
+            i += 1
+        if i < len(values):
+            if values[i] is not None:
+                 node.right = Node(values[i])
+                 nodes.append(node.right)
+            i += 1
+    return root
 
-        current = self.head
-        found = False
-        while current:
-            if current.value == value:
-                found = True
-                if current == self.head:
-                    self.head = current.next
-                    if self.head:
-                        self.head.prev = None
-                    else:
-                        self.tail = None
-                elif current == self.tail:
-                    self.tail = current.prev
-                    self.tail.next = None
-                else:
-                    current.prev.next = current.next
-                    current.next.prev = current.prev
-                self.size -= 1
-                print(f"Deleted {value}. List state:")
-                break
-            current = current.next
-        if not found:
-            print(f"Value {value} not found for deletion. List state:")
-        self.display()
+def display_linked_list(head):
+    display = ""
+    current = head
+    while current:
+        display += f"{current.data} -> "
+        current = current.next
+    return display + "None"
 
-    def display(self):
-        elements = []
-        current = self.head
-        while current:
-            elements.append(str(current.value))
-            current = current.next
-        if not elements:
-            print("  (empty)")
-        else:
-            print(f"  Head <-> {' <-> '.join(elements)} <-> Tail (Size: {self.size})")
-        print("-" * 30)
+def display_doubly_linked_list(head):
+    display = ""
+    current = head
+    while current:
+        display += f"{current.data} <-> "
+        current = current.next
+    return display + "None"
 
-# Circular Linked List
-class CircularLinkedListNode:
-    def __init__(self, value):
-        self.value = value
-        self.next = None
+def display_tree(root):
+    if not root:
+        return "Empty Tree"
+    def traverse(node, level=0, prefix="Root: "):
+        if node:
+            right_str = traverse(node.right, level + 1, "Right: ") if node.right else ""
+            node_str = "  " * level + prefix + str(node.data) + "\n"
+            left_str = traverse(node.left, level + 1, "Left: ") if node.left else ""
+            return right_str + node_str + left_str
+        return ""
+    return traverse(root)
 
-    def __repr__(self):
-        return f"Node({self.value})"
+def enqueue(queue, item):
+    queue.append(item)
 
-class CircularSinglyLinkedList:
-    def __init__(self):
-        self.head = None
-        self.size = 0
+def dequeue(queue):
+    if queue:
+        return queue.pop(0)
+    return None
 
-    def append(self, value):
-        new_node = CircularLinkedListNode(value)
-        if not self.head:
-            self.head = new_node
-            new_node.next = self.head
-        else:
-            current = self.head
-            while current.next != self.head:
-                current = current.next
-            current.next = new_node
-            new_node.next = self.head
-        self.size += 1
-        print(f"Appended {value}. List state:")
-        self.display()
+def push(stack, item):
+    stack.append(item)
 
-    def prepend(self, value):
-        new_node = CircularLinkedListNode(value)
-        if not self.head:
-            self.head = new_node
-            new_node.next = self.head
-        else:
-            current = self.head
-            while current.next != self.head:
-                current = current.next
-            new_node.next = self.head
-            current.next = new_node
-            self.head = new_node
-        self.size += 1
-        print(f"Prepended {value}. List state:")
-        self.display()
+def pop(stack):
+    if stack:
+        return stack.pop()
+    return None
 
-    def delete_by_value(self, value):
-        if not self.head:
-            print("List is empty. Cannot delete.")
-            return
+def insert_bst(root, key):
+    if not root:
+        return Node(key)
+    if key < root.data:
+        root.left = insert_bst(root.left, key)
+    else:
+        root.right = insert_bst(root.right, key)
+    return root
 
-        if self.head.value == value and self.head.next == self.head:
-            self.head = None
-            self.size -= 1
-            print(f"Deleted {value}. List state:")
-            self.display()
-            return
-
-        prev = None
-        current = self.head
-        found = False
-        while True:
-            if current.value == value:
-                found = True
-                if current == self.head:
-                    temp = self.head
-                    while temp.next != self.head:
-                        temp = temp.next
-                    self.head = self.head.next
-                    temp.next = self.head
-                else:
-                    prev.next = current.next
-                self.size -= 1
-                print(f"Deleted {value}. List state:")
-                break
-            prev = current
-            current = current.next
-            if current == self.head:
-                break
-
-        if not found:
-            print(f"Value {value} not found for deletion. List state:")
-        self.display()
-
-    def display(self):
-        if not self.head:
-            print("  (empty)")
-            print("-" * 30)
-            return
-
-        elements = []
-        current = self.head
-        while True:
-            elements.append(str(current.value))
-            current = current.next
-            if current == self.head:
-                break
-        print(f"  {' -> '.join(elements)} -> ... (back to {self.head.value}) (Size: {self.size})")
-        print("-" * 30)
-
-# Simple Queue (List-based for conceptual clarity)
-class SimpleQueue:
-    def __init__(self):
-        self.queue = []
-
-    def enqueue(self, item):
-        self.queue.append(item)
-        print(f"Enqueued {item}. Queue state:")
-        self.display()
-
-    def dequeue(self):
-        if self.is_empty():
-            print("Queue is empty. Cannot dequeue.")
-            return None
-        item = self.queue.pop(0) # O(N) operation for lists
-        print(f"Dequeued {item}. Queue state:")
-        self.display()
-        return item
-
-    def front(self):
-        if self.is_empty():
-            print("Queue is empty. No front element.")
-            return None
-        return self.queue[0]
-
-    def is_empty(self):
-        return len(self.queue) == 0
-
-    def display(self):
-        if self.is_empty():
-            print("  (empty)")
-        else:
-            print(f"  Front <-- {' <-- '.join(map(str, self.queue))} <-- Rear (Size: {len(self.queue)})")
-        print("-" * 30)
-
-# Circular Queue
-class CircularQueue:
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.queue = [None] * capacity
-        self.head = 0
-        self.tail = 0
-        self.size = 0
-
-    def enqueue(self, item):
-        if self.size == self.capacity:
-            print("Queue is full. Cannot enqueue.")
-            return False
-        self.queue[self.tail] = item
-        self.tail = (self.tail + 1) % self.capacity
-        self.size += 1
-        print(f"Enqueued {item}. Queue state:")
-        self.display()
-        return True
-
-    def dequeue(self):
-        if self.is_empty():
-            print("Queue is empty. Cannot dequeue.")
-            return None
-        item = self.queue[self.head]
-        self.queue[self.head] = None
-        self.head = (self.head + 1) % self.capacity
-        self.size -= 1
-        print(f"Dequeued {item}. Queue state:")
-        self.display()
-        return item
-
-    def front(self):
-        if self.is_empty():
-            return None
-        return self.queue[self.head]
-
-    def is_empty(self):
-        return self.size == 0
-
-    def is_full(self):
-        return self.size == self.capacity
-
-    def display(self):
-        if self.is_empty():
-            print(f"  Array: {self.queue} | (empty)")
-        else:
-            display_arr = []
-            for i in range(self.size):
-                idx = (self.head + i) % self.capacity
-                display_arr.append(str(self.queue[idx]))
-            print(f"  Array: {self.queue} | Head: {self.head}, Tail: {self.tail}, Size: {self.size}")
-            print(f"  Conceptual: Front ({self.queue[self.head]}) <-- {' <-- '.join(display_arr)} <-- Rear ({self.queue[(self.tail - 1 + self.capacity) % self.capacity]})")
-        print("-" * 30)
-
-
-# --- Non-Linear Data Structures ---
-
-# Tree (General N-ary Tree)
-class TreeNode:
-    def __init__(self, value):
-        self.value = value
-        self.children = []
-
-    def __repr__(self):
-        return f"Node({self.value})"
-
-def add_child_to_tree(parent_node, child_value):
-    child_node = TreeNode(child_value)
-    parent_node.children.append(child_node)
-    return child_node
-
-def visualize_tree(node, level=0, prefix=""):
-    if node is not None:
-        indent = "    " * level
-        print(f"{indent}{prefix}{node.value}")
-        for i, child in enumerate(node.children):
-            is_last_child = (i == len(node.children) - 1)
-            child_prefix = "└── " if is_last_child else "├── "
-            visualize_tree(child, level + 1, child_prefix)
-
-# Heap (Min-Heap, Max-Heap using heapq)
-import heapq # Python's built-in min-heap
-
-# Trie (Prefix Tree)
-class TrieNode:
-    def __init__(self):
-        self.children = {}
-        self.is_end_of_word = False
-
-class Trie:
-    def __init__(self):
-        self.root = TrieNode()
-
-    def insert(self, word):
-        node = self.root
-        for char in word:
-            if char not in node.children:
-                node.children[char] = TrieNode()
-            node = node.children[char]
-        node.is_end_of_word = True
-        print(f"Inserted '{word}'.")
-        self.display()
-
-    def search(self, word):
-        node = self.root
-        path = []
-        for char in word:
-            if char not in node.children:
-                print(f"Search for '{word}': NOT FOUND. Path: {' -> '.join(path)}")
-                return False
-            path.append(char)
-            node = node.children[char]
-        result = node.is_end_of_word
-        print(f"Search for '{word}': {'FOUND' if result else 'NOT FOUND (prefix exists)'}. Path: {' -> '.join(path)}")
-        return result
-
-    def starts_with(self, prefix):
-        node = self.root
-        path = []
-        for char in prefix:
-            if char not in node.children:
-                print(f"Prefix '{prefix}': NO WORDS. Path: {' -> '.join(path)}")
-                return False
-            path.append(char)
-            node = node.children[char]
-        print(f"Prefix '{prefix}': WORDS EXIST. Path: {' -> '.join(path)}")
-        return True
-
-    def _display_trie(self, node, prefix="", level=0):
-        indent = "  " * level
-        status = "(End of Word)" if node.is_end_of_word else ""
-        print(f"{indent}{prefix}{status}")
-        for char, child_node in sorted(node.children.items()):
-            self._display_trie(child_node, f"[{char}]", level + 1)
-
-    def display(self):
-        print("Current Trie Structure (simplified):")
-        self._display_trie(self.root, "ROOT")
-        print("-" * 30)
-
-# Graph (Adjacency List Representation)
-class Graph:
-    def __init__(self, is_directed=False):
-        self.graph = collections.defaultdict(list) # Adjacency list
-        self.is_directed = is_directed
-        self.vertices = set()
-
-    def add_vertex(self, vertex):
-        self.vertices.add(vertex)
-        if vertex not in self.graph:
-            self.graph[vertex] = []
-        print(f"Added vertex: {vertex}")
-        self.display()
-
-    def add_edge(self, u, v, weight=1):
-        self.vertices.add(u)
-        self.vertices.add(v)
-        self.graph[u].append((v, weight))
-        if not self.is_directed:
-            self.graph[v].append((u, weight))
-        print(f"Added edge: {u} {'--' if not self.is_directed else '->'} {v} (Weight: {weight})")
-        self.display()
-
-    def remove_vertex(self, vertex):
-        if vertex not in self.vertices:
-            print(f"Vertex {vertex} not found.")
-            return
-
-        self.vertices.discard(vertex)
-        for vtx in list(self.graph.keys()):
-            self.graph[vtx] = [(neighbor, w) for neighbor, w in self.graph[vtx] if neighbor != vertex]
-        if vertex in self.graph:
-            del self.graph[vertex]
-        print(f"Removed vertex: {vertex}")
-        self.display()
-
-    def remove_edge(self, u, v):
-        if u not in self.graph or v not in self.vertices:
-            print(f"Edge {u} -> {v} not found (one or both vertices missing).")
-            return
-
-        self.graph[u] = [(neighbor, w) for neighbor, w in self.graph[u] if neighbor != v]
-        if not self.is_directed:
-            self.graph[v] = [(neighbor, w) for neighbor, w in self.graph[v] if neighbor != u]
-        print(f"Removed edge: {u} {'--' if not self.is_directed else '->'} {v}")
-        self.display()
-
-    def display(self):
-        print("Current Graph (Adjacency List):")
-        if not self.vertices:
-            print("  (empty)")
-        else:
-            sorted_vertices = sorted(list(self.vertices))
-            for vertex in sorted_vertices:
-                neighbors = self.graph.get(vertex, [])
-                formatted_neighbors = []
-                for neighbor, weight in sorted(neighbors):
-                    if weight == 1:
-                        formatted_neighbors.append(str(neighbor))
-                    else:
-                        formatted_neighbors.append(f"{neighbor}({weight})")
-
-                print(f"  {vertex}: [{', '.join(formatted_neighbors)}]")
-        print("-" * 40)
-
-
-# --- Specialized or Advanced Data Structures ---
-
-# Disjoint Set / Union-Find
-class DisjointSet:
-    def __init__(self, elements):
-        self.parent = {elem: elem for elem in elements}
-        self.rank = {elem: 0 for elem in elements}
-        print(f"Initialized Disjoint Set with elements: {list(elements)}")
-        self.display()
-
-    def find(self, i):
-        path_taken = []
-        current = i
-        while current != self.parent[current]:
-            path_taken.append(current)
-            current = self.parent[current]
-        
-        root = current
-        for node in path_taken:
-            self.parent[node] = root
-        
-        print(f"Find({i}): Root is {root}. Path compressed: {path_taken}")
-        self.display()
+def search_bst(root, key):
+    if not root or root.data == key:
         return root
+    if key < root.data:
+        return search_bst(root.left, key)
+    return search_bst(root.right, key)
 
-    def union(self, i, j):
-        root_i = self.find(i)
-        root_j = self.find(j)
+def hash_function(key, size):
+    return key % size
 
-        if root_i != root_j:
-            if self.rank[root_i] < self.rank[root_j]:
-                self.parent[root_i] = root_j
-                print(f"Union({i}, {j}): {root_i} attached under {root_j} (rank).")
-            elif self.rank[root_j] < self.rank[root_i]:
-                self.parent[root_j] = root_i
-                print(f"Union({i}, {j}): {root_j} attached under {root_i} (rank).")
-            else:
-                self.parent[root_j] = root_i
-                self.rank[root_i] += 1
-                print(f"Union({i}, {j}): {root_j} attached under {root_i} (equal rank, rank_of_{root_i} incremented).")
-            self.display()
-            return True
-        else:
-            print(f"Union({i}, {j}): {i} and {j} are already in the same set.")
-            self.display()
+def insert_hash_table(table, key, value):
+    index = hash_function(key, len(table))
+    table[index].append((key, value))
+
+def search_hash_table(table, key):
+    index = hash_function(key, len(table))
+    for k, v in table[index]:
+        if k == key:
+            return v
+    return None
+
+def add_to_bloom_filter(bloom_filter, item, hash_functions):
+    for hash_func in hash_functions:
+        index = hash_func(item, len(bloom_filter))
+        bloom_filter[index] = True
+
+def check_bloom_filter(bloom_filter, item, hash_functions):
+    for hash_func in hash_functions:
+        index = hash_func(item, len(bloom_filter))
+        if not bloom_filter[index]:
             return False
+    return True
 
-    def display(self):
-        print("Current Disjoint Set State:")
-        for elem in sorted(self.parent.keys()):
-            representative = elem
-            while representative != self.parent[representative]:
-                representative = self.parent[representative]
-            print(f"  Element '{elem}' belongs to set represented by '{representative}' (Parent: {self.parent[elem]}, Rank: {self.rank.get(elem, 'N/A')})")
-        
-        sets = collections.defaultdict(list)
-        for elem in self.parent:
-            sets[self.find(elem)].append(elem)
-        
-        print("  Current Sets (Conceptual):")
-        for rep, elems in sets.items():
-            print(f"    Set of {rep}: {sorted(elems)}")
-        print("-" * 40)
+def insert_skip_list(skip_list, key, value, max_level):
+    level = 0
+    while random.random() < 0.5 and level < max_level:
+        level += 1
+    new_node = [None] * (level + 1)
+    new_node[0] = (key, value)
+    if not skip_list:
+        skip_list.append(new_node)
+        return
+    current = skip_list[0]
+    update = [None] * (max_level + 1)
+    for i in range(len(current) - 1, -1, -1):
+        while current[i] and current[i][0] < key:
+            current = current[i]
+        update[i] = current
+    if level >= len(skip_list):
+        skip_list.append(new_node)
+    else:
+        skip_list[level] = new_node
+    for i in range(level + 1):
+        new_node[i] = update[i][i] if update[i] else None
+        if update[i]:
+            update[i][i] = new_node
 
-# Bloom Filter
-class BloomFilter:
-    def __init__(self, size, num_hashes):
-        self.size = size
-        self.num_hashes = num_hashes
-        self.bit_array = [0] * size
-        print(f"Initialized Bloom Filter: Size={size}, Num Hashes={num_hashes}")
-        self.display()
-
-    def _hash(self, item, seed):
-        h = hashlib.md5(f"{item}-{seed}".encode()).hexdigest()
-        return int(h, 16) % self.size
-
-    def add(self, item):
-        print(f"Adding '{item}':")
-        for i in range(self.num_hashes):
-            index = self._hash(item, i)
-            self.bit_array[index] = 1
-            print(f"  Hash {i+1} maps to index {index}. Set bit_array[{index}] to 1.")
-        print(f"'{item}' added.")
-        self.display()
-
-    def contains(self, item):
-        print(f"Checking if '{item}' exists:")
-        for i in range(self.num_hashes):
-            index = self._hash(item, i)
-            if self.bit_array[index] == 0:
-                print(f"  Hash {i+1} maps to index {index}. bit_array[{index}] is 0. '{item}' is DEFINITELY NOT present.")
-                return False
-            else:
-                print(f"  Hash {i+1} maps to index {index}. bit_array[{index}] is 1 (match).")
-        print(f"'{item}' MIGHT BE present (all bits set).")
-        return True
-
-    def display(self):
-        print("Current Bloom Filter Bit Array:")
-        print(f"  [{' '.join(map(str, self.bit_array))}]")
-        print("-" * 40)
-
-# Skip List
-class SkipListNode:
-    def __init__(self, value, level):
-        self.value = value
-        self.next = [None] * (level + 1)
-
-class SkipList:
-    def __init__(self, max_level=4, p=0.5):
-        self.max_level = max_level
-        self.p = p
-        self.head = SkipListNode(float('-inf'), max_level)
-        self.level = 0
-        print(f"Initialized Skip List (Max Level: {max_level}, Probability p: {p})")
-        self.display()
-
-    def _random_level(self):
-        level = 0
-        while random.random() < self.p and level < self.max_level:
-            level += 1
-        return level
-
-    def insert(self, value):
-        print(f"Inserting {value}:")
-        update = [None] * (self.max_level + 1)
-        current = self.head
-
-        for i in range(self.level, -1, -1):
-            while current.next[i] and current.next[i].value < value:
-                current = current.next[i]
-            update[i] = current
-
-        current = current.next[0]
-
-        if current is None or current.value != value:
-            new_level = self._random_level()
-            if new_level > self.level:
-                for i in range(self.level + 1, new_level + 1):
-                    update[i] = self.head
-                self.level = new_level
-
-            new_node = SkipListNode(value, new_level)
-            for i in range(new_level + 1):
-                new_node.next[i] = update[i].next[i]
-                update[i].next[i] = new_node
-            print(f"  Inserted {value} at level {new_level}.")
-            self.display()
-        else:
-            print(f"  Value {value} already exists.")
-            self.display()
-
-    def search(self, value):
-        print(f"Searching for {value}:")
-        current = self.head
-        path = []
-        for i in range(self.level, -1, -1):
-            while current.next[i] and current.next[i].value < value:
-                path.append(f"Level {i}: {current.value} -> {current.next[i].value}")
-                current = current.next[i]
-            path.append(f"Level {i}: Current at {current.value}")
-        
-        current = current.next[0]
-        
-        if current and current.value == value:
-            print(f"  Found {value}. Path: {path}")
-            return True
-        else:
-            print(f"  {value} not found. Path: {path}")
-            return False
-
-    def delete(self, value):
-        print(f"Deleting {value}:")
-        update = [None] * (self.max_level + 1)
-        current = self.head
-
-        for i in range(self.level, -1, -1):
-            while current.next[i] and current.next[i].value < value:
-                current = current.next[i]
-            update[i] = current
-
-        current = current.next[0]
-
-        if current and current.value == value:
-            for i in range(self.level + 1):
-                if update[i].next[i] != current:
-                    continue
-                update[i].next[i] = current.next[i]
-            
-            while self.level > 0 and self.head.next[self.level] is None:
-                self.level -= 1
-            print(f"  Deleted {value}.")
-            self.display()
-            return True
-        else:
-            print(f"  Value {value} not found for deletion.")
-            self.display()
-            return False
-
-    def display(self):
-        print("Current Skip List Structure:")
-        if self.head.next[0] is None:
-            print("  (empty)")
-        else:
-            for i in range(self.level, -1, -1):
-                level_str = f"Level {i:2d}: Head "
-                current = self.head.next[i]
-                while current:
-                    level_str += f"-> {current.value} "
-                    current = current.next[i]
-                print(level_str + "-> None")
-        print("-" * 40)
-
-# LRU Cache (Least Recently Used)
-class LRUNode:
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-        self.prev = None
-        self.next = None
-
-    def __repr__(self):
-        return f"({self.key}: {self.value})"
+def search_skip_list(skip_list, key):
+    if not skip_list:
+        return None
+    current = skip_list[0]
+    for i in range(len(current) - 1, -1, -1):
+        while current[i] and current[i][0] < key:
+            current = current[i]
+    if current[0] == key:
+        return current[0][1]
+    return None
 
 class LRUCache:
     def __init__(self, capacity):
         self.capacity = capacity
         self.cache = {}
-        self.head = LRUNode(0, 0)
-        self.tail = LRUNode(0, 0)
-        self.head.next = self.tail
-        self.tail.prev = self.head
-        print(f"Initialized LRU Cache with capacity: {capacity}")
-        self.display()
-
-    def _add_node(self, node):
-        node.prev = self.head
-        node.next = self.head.next
-        self.head.next.prev = node
-        self.head.next = node
-
-    def _remove_node(self, node):
-        prev_node = node.prev
-        next_node = node.next
-        prev_node.next = next_node
-        next_node.prev = prev_node
-
-    def _move_to_front(self, node):
-        self._remove_node(node)
-        self._add_node(node)
+        self.queue = []
 
     def get(self, key):
-        print(f"Getting key '{key}':")
         if key in self.cache:
-            node = self.cache[key]
-            self._move_to_front(node)
-            print(f"  Found '{key}': {node.value}. Moved to front.")
-            self.display()
-            return node.value
-        else:
-            print(f"  Key '{key}' not found.")
-            self.display()
-            return -1
+            self.queue.remove(key)
+            self.queue.append(key)
+            return self.cache[key]
+        return None
 
     def put(self, key, value):
-        print(f"Putting ({key}: {value}):")
         if key in self.cache:
-            node = self.cache[key]
-            node.value = value
-            self._move_to_front(node)
-            print(f"  Key '{key}' updated and moved to front.")
+            self.queue.remove(key)
+        elif len(self.queue) >= self.capacity:
+            oldest = self.queue.pop(0)
+            del self.cache[oldest]
+        self.cache[key] = value
+        self.queue.append(key)
+
+def find_set(parent, i):
+    if parent[i] == i:
+        return i
+    return find_set(parent, parent[i])
+
+def union_sets(parent, rank, x, y):
+    x_root = find_set(parent, x)
+    y_root = find_set(parent, y)
+    if x_root != y_root:
+        if rank[x_root] < rank[y_root]:
+            parent[x_root] = y_root
+        elif rank[x_root] > rank[y_root]:
+            parent[y_root] = x_root
         else:
-            new_node = LRUNode(key, value)
-            self.cache[key] = new_node
-            self._add_node(new_node)
+            parent[y_root] = x_root
+            rank[x_root] += 1
 
-            if len(self.cache) > self.capacity:
-                lru_node = self.tail.prev
-                self._remove_node(lru_node)
-                del self.cache[lru_node.key]
-                print(f"  Cache full. Removed LRU item: ({lru_node.key}: {lru_node.value}).")
-            print(f"  New item ({key}: {value}) added.")
-        self.display()
+def insert_avl(root, key):
+    if not root:
+        return Node(key)
 
-    def display(self):
-        print("Current LRU Cache State:")
-        items = []
-        current = self.head.next
-        while current != self.tail:
-            items.append(f"({current.key}:{current.value})")
-            current = current.next
-        
-        print(f"  Cache (MRU -> LRU): {' <-> '.join(items)}")
-        print(f"  Size: {len(self.cache)} / Capacity: {self.capacity}")
-        print("-" * 40)
+    if key < root.data:
+        root.left = insert_avl(root.left, key)
+    else:
+        root.right = insert_avl(root.right, key)
 
+    return root
 
-# --- Example Usage and Output ---
+def search_avl(root, key):
+    if not root or root.data == key:
+        return root
+    if key < root.data:
+        return search_avl(root.left, key)
+    return search_avl(root.right, key)
 
-print("=" * 50)
-print("--- DEMONSTRATING DATA STRUCTURES ---")
-print("=" * 50)
-print("\n")
+def insert_red_black_tree(root, key):
+    if not root:
+        return Node(key)
+    if key < root.data:
+        root.left = insert_red_black_tree(root.left, key)
+    else:
+        root.right = insert_red_black_tree(root.right, key)
+    return root
 
-print("--- Doubly Linked List ---")
-dll = DoublyLinkedList()
-dll.append(10)
-dll.append(20)
-dll.prepend(5)
-dll.append(30)
-dll.delete_by_value(20)
-dll.delete_by_value(5)
-dll.delete_by_value(100) # Not found
-dll.delete_by_value(30)
-dll.delete_by_value(10)
-dll.delete_by_value(50) # Empty list
-print("\n")
+def search_red_black_tree(root, key):
+    if not root or root.data == key:
+        return root
+    if key < root.data:
+        return search_red_black_tree(root.left, key)
+    return search_red_black_tree(root.right, key)
 
-print("--- Circular Singly Linked List ---")
-cll = CircularSinglyLinkedList()
-cll.append(10)
-cll.append(20)
-cll.prepend(5)
-cll.append(30)
-cll.delete_by_value(20)
-cll.delete_by_value(5)
-cll.delete_by_value(100) # Not found
-cll.delete_by_value(30)
-cll.delete_by_value(10)
-print("\n")
+def insert_b_tree(root, key):
+    if not root:
+        return Node(key)
+    if key < root.data:
+        root.left = insert_b_tree(root.left, key)
+    else:
+        root.right = insert_b_tree(root.right, key)
+    return root
 
-print("--- Simple Queue (List-based) ---")
-sq = SimpleQueue()
-sq.enqueue(10)
-sq.enqueue(20)
-sq.dequeue()
-sq.enqueue(30)
-sq.dequeue()
-sq.dequeue()
-sq.dequeue() # Empty
-print(f"Front element: {sq.front()}")
-print("\n")
+def search_b_tree(root, key):
+     if not root or root.data == key:
+        return root
+     if key < root.data:
+        return search_b_tree(root.left, key)
+     return search_b_tree(root.right, key)
 
-print("--- Circular Queue ---")
-cq = CircularQueue(5)
-cq.enqueue(1)
-cq.enqueue(2)
-cq.enqueue(3)
-cq.dequeue()
-cq.enqueue(4)
-cq.enqueue(5)
-cq.enqueue(6) # Full
-cq.dequeue()
-cq.dequeue()
-cq.enqueue(7)
-cq.enqueue(8)
-cq.dequeue()
-cq.dequeue()
-cq.dequeue()
-cq.dequeue() # Empty
-print("\n")
+# --- Streamlit App ---
+st.title("Interactive Data Structure Explorer")
 
-print("--- General Tree (N-ary Tree) ---")
-root = TreeNode("A")
-b = add_child_to_tree(root, "B")
-c = add_child_to_tree(root, "C")
-d = add_child_to_tree(root, "D")
+data_structures = [
+    "Linked List", "Doubly Linked List", "Queue", "Stack", "Binary Tree",
+    "Binary Search Tree (BST)", "Hash Table", "Bloom Filter", "Skip List",
+    "LRU Cache", "Disjoint Sets", "AVL Tree (Conceptual)",
+    "Red-Black Tree (Conceptual)", "B-Tree (Conceptual)"
+]
+structure_choice = st.selectbox("Select a Data Structure", data_structures)
 
-e = add_child_to_tree(b, "E")
-f = add_child_to_tree(b, "F")
+st.write("---")
 
-g = add_child_to_tree(c, "G")
+if structure_choice == "Linked List":
+    st.header("Linked List")
+    list_data = st.text_input("Enter comma-separated values for the Linked List (e.g., 1,2,3)", "1,2,3")
+    list_values = [int(x.strip()) for x in list_data.split(',') if x.strip().isdigit()]
+    linked_list_head = create_linked_list(list_values)
+    st.write("Linked List Representation:")
+    st.code(display_linked_list(linked_list_head), language="text")
 
-h = add_child_to_tree(d, "H")
-i = add_child_to_tree(d, "I")
+elif structure_choice == "Doubly Linked List":
+    st.header("Doubly Linked List")
+    list_data = st.text_input("Enter comma-separated values for the Doubly Linked List (e.g., 1,2,3)", "1,2,3")
+    list_values = [int(x.strip()) for x in list_data.split(',') if x.strip().isdigit()]
+    doubly_linked_list_head = create_doubly_linked_list(list_values)
+    st.write("Doubly Linked List Representation:")
+    st.code(display_doubly_linked_list(doubly_linked_list_head), language="text")
 
-print("Tree Structure:")
-visualize_tree(root)
-print("-" * 30)
-print("\n")
+elif structure_choice == "Queue":
+    st.header("Queue")
+    queue_data = st.text_input("Enter comma-separated values to enqueue (e.g., 1,2,3)", "1,2,3")
+    queue_values = [int(x.strip()) for x in queue_data.split(',') if x.strip().isdigit()]
+    queue = []
+    for val in queue_values:
+        enqueue(queue, val)
+        st.write(f"Enqueued: {val}, Queue: {queue}")
+        time.sleep(0.5)
+    while queue:
+        dequeued_item = dequeue(queue)
+        st.write(f"Dequeued: {dequeued_item}, Queue: {queue}")
+        time.sleep(0.5)
 
-print("--- Min-Heap (using heapq) ---")
-min_heap = []
-print("Inserting elements:")
-elements_to_add_min = [30, 10, 50, 5, 20, 40]
-for elem in elements_to_add_min:
-    heapq.heappush(min_heap, elem)
-    print(f"  Inserted {elem}. Heap: {min_heap}")
-print("Final Heap Array (Min-Heap property ensured):", min_heap)
-print("-" * 30)
+elif structure_choice == "Stack":
+    st.header("Stack")
+    stack_data = st.text_input("Enter comma-separated values to push onto the stack (e.g., 1,2,3)", "1,2,3")
+    stack_values = [int(x.strip()) for x in stack_data.split(',') if x.strip().isdigit()]
+    stack = []
+    for val in stack_values:
+        push(stack, val)
+        st.write(f"Pushed: {val}, Stack: {stack}")
+        time.sleep(0.5)
+    while stack:
+        popped_item = pop(stack)
+        st.write(f"Popped: {popped_item}, Stack: {stack}")
+        time.sleep(0.5)
 
-print("Extracting min elements:")
-while min_heap:
-    min_val = heapq.heappop(min_heap)
-    print(f"  Extracted min: {min_val}. Heap: {min_heap}")
-print("Heap after all extractions:", min_heap)
-print("-" * 30)
+elif structure_choice == "Binary Tree":
+    st.header("Binary Tree")
+    tree_data = st.text_input("Enter comma-separated values for the Binary Tree (use 'None' for empty nodes, e.g., 1,2,3,None,None,4,5)", "1,2,3,None,None,4,5")
+    tree_values = [int(x.strip()) if x.strip().isdigit() else None for x in tree_data.split(',')]
+    binary_tree_root = create_binary_tree(tree_values)
+    st.write("Binary Tree Representation:")
+    st.code(display_tree(binary_tree_root), language="text")
 
-print("\n--- Max-Heap (conceptual, using heapq with negation) ---")
-max_heap = []
-elements_to_add_max = [30, 10, 50, 5, 20, 40]
-print("Inserting elements (as negatives to simulate max-heap):")
-for elem in elements_to_add_max:
-    heapq.heappush(max_heap, -elem)
-    print(f"  Inserted {elem}. Internal Heap: {max_heap}")
-print("Final Internal Heap Array:", max_heap)
-print("-" * 30)
+elif structure_choice == "Binary Search Tree (BST)":
+    st.header("Binary Search Tree (BST)")
+    bst_data = st.text_input("Enter comma-separated values to insert into the BST (e.g., 5,3,7,2,4,6,8)", "5,3,7,2,4,6,8")
+    bst_values = [int(x.strip()) for x in bst_data.split(',') if x.strip().isdigit()]
+    bst_root = None
+    for val in bst_values:
+        bst_root = insert_bst(bst_root, val)
+        st.write(f"Inserted: {val}")
+        st.code(display_tree(bst_root), language="text")
+        time.sleep(0.5)
 
-print("Extracting max elements:")
-while max_heap:
-    max_val = -heapq.heappop(max_heap)
-    print(f"  Extracted max: {max_val}. Internal Heap: {max_heap}")
-print("Internal Heap after all extractions:", max_heap)
-print("-" * 30)
-print("\n")
+    search_val = st.number_input("Enter a value to search for in the BST:", value=5, step=1)
+    if st.button("Search"):
+        found_node = search_bst(bst_root, search_val)
+        if found_node:
+            st.write(f"Value {search_val} found in the BST.")
+        else:
+            st.write(f"Value {search_val} not found in the BST.")
 
-print("--- Trie (Prefix Tree) ---")
-trie = Trie()
-trie.insert("apple")
-trie.insert("apricot")
-trie.insert("apply")
-trie.insert("banana")
-trie.search("apple")
-trie.search("app")
-trie.search("orange")
-trie.starts_with("app")
-trie.starts_with("ban")
-trie.starts_with("grape")
-print("\n")
+elif structure_choice == "Hash Table":
+    st.header("Hash Table")
+    hash_table_size = st.number_input("Enter the size of the Hash Table:", min_value=1, value=10, step=1)
+    hash_table = [[] for _ in range(hash_table_size)]
+    hash_data = st.text_input("Enter comma-separated key-value pairs (e.g., 1:a,2:b,3:c)", "1:a,2:b,3:c")
+    hash_pairs = [pair.strip().split(':') for pair in hash_data.split(',') if ':' in pair]
+    for key, value in hash_pairs:
+        insert_hash_table(hash_table, int(key), value)
+        st.write(f"Inserted: Key={key}, Value={value}, Hash Table: {hash_table}")
+        time.sleep(0.5)
 
-print("--- Undirected, Unweighted Graph ---")
-g_undirected = Graph(is_directed=False)
-g_undirected.add_vertex("A")
-g_undirected.add_vertex("B")
-g_undirected.add_vertex("C")
-g_undirected.add_edge("A", "B")
-g_undirected.add_edge("B", "C")
-g_undirected.add_edge("A", "C")
-g_undirected.remove_edge("B", "C")
-g_undirected.remove_vertex("A")
-print("\n")
+    search_key = st.number_input("Enter a key to search for in the Hash Table:", value=1, step=1)
+    if st.button("Search"):
+        found_value = search_hash_table(hash_table, search_key)
+        if found_value:
+            st.write(f"Value for key {search_key}: {found_value}")
+        else:
+            st.write(f"Key {search_key} not found in the Hash Table.")
 
-print("--- Directed, Weighted Graph ---")
-g_directed = Graph(is_directed=True)
-g_directed.add_edge("X", "Y", 5)
-g_directed.add_edge("X", "Z", 2)
-g_directed.add_edge("Y", "Z", 3)
-g_directed.add_edge("Z", "X", 1)
-g_directed.remove_edge("X", "Z")
-print("\n")
+elif structure_choice == "Bloom Filter":
+    st.header("Bloom Filter")
+    bloom_filter_size = st.number_input("Enter the size of the Bloom Filter:", min_value=1, value=20, step=1)
+    bloom_filter = [False] * bloom_filter_size
+    hash_functions = [
+        lambda item, size: hash(item) % size,
+        lambda item, size: (hash(item) >> 8) % size,
+        lambda item, size: (hash(item) >> 16) % size
+    ]
+    bloom_data = st.text_input("Enter comma-separated values to add to the Bloom Filter (e.g., apple,banana,cherry)", "apple,banana,cherry")
+    bloom_values = [x.strip() for x in bloom_data.split(',')]
+    for val in bloom_values:
+        add_to_bloom_filter(bloom_filter, val, hash_functions)
+        st.write(f"Added: {val}, Bloom Filter: {bloom_filter}")
+        time.sleep(0.5)
 
-print("--- Disjoint Set (Union-Find) ---")
-elements = ['A', 'B', 'C', 'D', 'E', 'F']
-ds = DisjointSet(elements)
-ds.union('A', 'B')
-ds.union('C', 'D')
-ds.union('E', 'F')
-ds.union('B', 'D')
-ds.union('A', 'C')
-ds.find('F')
-ds.find('A')
-ds.union('D', 'F')
-print("\n")
+    check_val = st.text_input("Enter a value to check in the Bloom Filter:", "apple")
+    if st.button("Check"):
+        if check_bloom_filter(bloom_filter, check_val, hash_functions):
+            st.write(f"'{check_val}' might be in the Bloom Filter.")
+        else:
+            st.write(f"'{check_val}' is definitely not in the Bloom Filter.")
 
-print("--- Bloom Filter ---")
-bf = BloomFilter(20, 3)
-bf.add("apple")
-bf.add("banana")
-bf.contains("apple")
-bf.contains("grape")
-bf.contains("orange")
-print("\n")
+elif structure_choice == "Skip List":
+    st.header("Skip List")
+    max_level = st.number_input("Enter the maximum level for the Skip List:", min_value=1, value=3, step=1)
+    skip_list_data = st.text_input("Enter comma-separated key-value pairs (e.g., 1:a,2:b,3:c)", "1:a,2:b,3:c")
+    skip_list_pairs = [pair.strip().split(':') for pair in skip_list_data.split(',') if ':' in pair]
+    skip_list = []
+    for key, value in skip_list_pairs:
+        insert_skip_list(skip_list, int(key), value, max_level)
+        st.write(f"Inserted: Key={key}, Value={value}, Skip List: {skip_list}")
+        time.sleep(1)
 
-print("--- Skip List ---")
-sl = SkipList(max_level=4, p=0.5)
-sl.insert(30)
-sl.insert(10)
-sl.insert(50)
-sl.insert(20)
-sl.insert(45)
-sl.insert(5)
-sl.search(20)
-sl.search(100)
-sl.delete(10)
-sl.delete(50)
-sl.delete(100)
-sl.insert(15)
-sl.search(15)
-print("\n")
+    search_key = st.number_input("Enter a key to search for in the Skip List:", value=1, step=1)
+    if st.button("Search"):
+        found_value = search_skip_list(skip_list, search_key)
+        if found_value:
+            st.write(f"Value for key {search_key}: {found_value}")
+        else:
+            st.write(f"Key {search_key} not found in the Skip List.")
 
-print("--- LRU Cache ---")
-lru = LRUCache(2)
-lru.put(1, 10)
-lru.put(2, 20)
-lru.get(1)
-lru.put(3, 30)
-lru.get(2)
-lru.put(4, 40)
-lru.get(1)
-lru.get(3)
-lru.put(2, 200)
-lru.get(4)
-print("\n")
+elif structure_choice == "LRU Cache":
+    st.header("LRU Cache")
+    cache_capacity = st.number_input("Enter the capacity of the LRU Cache:", min_value=1, value=5, step=1)
+    lru_cache = LRUCache(cache_capacity)
+    lru_data = st.text_input("Enter comma-separated key-value pairs (e.g., 1:a,2:b,3:c)", "1:a,2:b,3:c")
+    lru_pairs = [pair.strip().split(':') for pair in lru_data.split(',') if ':' in pair]
+    for key, value in lru_pairs:
+        lru_cache.put(int(key), value)
+        st.write(f"Put: Key={key}, Value={value}, Cache: {lru_cache.cache}, Queue: {lru_cache.queue}")
+        time.sleep(1)
 
-print("--- Map / Dictionary (Python dict) ---")
-my_dict = {}
-print(f"Initial: {my_dict}")
-my_dict["apple"] = 5
-print(f"Added 'apple': {my_dict}")
-my_dict["banana"] = 2
-print(f"Added 'banana': {my_dict}")
-print(f"Value of 'apple': {my_dict.get('apple')}")
-my_dict["apple"] = 7
-print(f"Updated 'apple': {my_dict}")
-del my_dict["banana"]
-print(f"Deleted 'banana': {my_dict}")
-print(f"'orange' in dict? {'orange' in my_dict}")
-print("-" * 40)
-print("\n")
+    get_key = st.number_input("Enter a key to get from the LRU Cache:", value=1, step=1)
+    if st.button("Get"):
+        retrieved_value = lru_cache.get(get_key)
+        if retrieved_value:
+            st.write(f"Value for key {get_key}: {retrieved_value}, Cache: {lru_cache.cache}, Queue: {lru_cache.queue}")
+        else:
+            st.write(f"Key {get_key} not found in the Cache.")
 
-print("--- Set (Python set) ---")
-my_set = set()
-print(f"Initial: {my_set}")
-my_set.add(10)
-print(f"Added 10: {my_set}")
-my_set.add(20)
-my_set.add(10)
-print(f"Added 20, 10 (again): {my_set}")
-my_set.remove(20)
-print(f"Removed 20: {my_set}")
-print(f"10 in set? {10 in my_set}")
-print("-" * 40)
+elif structure_choice == "Disjoint Sets":
+     st.header("Disjoint Sets (Union-Find)")
+     num_elements = st.number_input("Enter the number of elements:", min_value=1, value=5, step=1)
+     parent = list(range(num_elements))
+     rank = [0] * num_elements
+     st.write(f"Initial Sets: {[ {i} ] for i in range(num_elements)]")
 
-print("\n--- Multiset / Bag (Python collections.Counter) ---")
-from collections import Counter
-my_multiset = Counter()
-print(f"Initial: {my_multiset}")
-my_multiset.update([1, 2, 3, 2, 1, 4])
-print(f"Added elements: {my_multiset}")
-my_multiset.update([1])
-print(f"Added another 1: {my_multiset}")
-print(f"Count of 2: {my_multiset[2]}")
-my_multiset.subtract([1, 2])
-print(f"Subtracted one 1 and one 2: {my_multiset}")
-print("-" * 40)
-print("\n")
+     union_pairs_str = st.text_input("Enter comma-separated pairs to union (e.g., 0,1;2,3)", "0,1;2,3")
+     union_pairs = [pair.split(',') for pair in union_pairs_str.split(';') if ',' in pair]
+     for pair in union_pairs:
+         if len(pair) == 2 and pair[0].isdigit() and pair[1].isdigit():
+             x, y = int(pair[0]), int(pair[1])
+             union_sets(parent, rank, x, y)
+             st.write(f"Union ({x}, {y}): Sets = {[find_set(parent, i) for i in range(num_elements)]}")
+             time.sleep(1)
 
-print("=" * 50)
-print("--- END OF DEMONSTRATION ---")
-print("=" * 50)
+     check_pair_str = st.text_input("Enter a pair to check if they are in the same set (e.g., 0,1)", "0,1")
+     check_pair = check_pair_str.split(',')
+     if len(check_pair) == 2 and check_pair[0].isdigit() and check_pair[1].isdigit():
+         a, b = int(check_pair[0]), int(check_pair[1])
+         if st.button("Check Set"):
+             if find_set(parent, a) == find_set(parent, b):
+                 st.write(f"{a} and {b} are in the same set.")
+             else:
+                 st.write(f"{a} and {b} are in different sets.")
+
+elif structure_choice == "AVL Tree (Conceptual)":
+    st.header("AVL Tree (Conceptual Representation)")
+    st.write("AVL trees are self-balancing BSTs.  Visualizing the rotations and balancing in a simple text-based interface is challenging.  This section will show the insertion sequence and a conceptual representation of the tree structure. For a full graphical representation, a dedicated visualization tool is recommended.")
+    avl_data = st.text_input("Enter comma-separated values to insert into the AVL Tree (e.g., 10,20,30,40,50,25)", "10,20,30,40,50,25")
+    avl_values = [int(x.strip()) for x in avl_data.split(',') if x.strip().isdigit()]
+    avl_root = None
+    for val in avl_values:
+        avl_root = insert_avl(avl_root, val)
+        st.write(f"Inserted: {val}")
+        st.code(display_tree(avl_root), language="text")
+        time.sleep(1)
+
+    search_val = st.number_input("Enter a value to search for in the AVL Tree:", value=10, step=1)
+    if st.button("Search AVL"):
+        found_node = search_avl(avl_root, search_val)
+        if found_node:
+            st.write(f"Value {search_val} found in the AVL Tree.")
+        else:
+            st.write(f"Value {search_val} not found.")
+
+elif structure_choice == "Red-Black Tree (Conceptual)":
+    st.header("Red-Black Tree (Conceptual Representation)")
+    st.write("Red-Black trees are self-balancing BSTs with specific coloring rules. Visualizing the coloring and balancing operations in detail is complex for a text-based interface. This section shows the insertion sequence and a conceptual tree structure. For a full graphical representation, a dedicated visualization tool is recommended.")
+    rb_data = st.text_input("Enter comma-separated values to insert (e.g., 10,18,5,31,12,2)", "10,18,5,31,12,2")
+    rb_values = [int(x.strip()) for x in rb_data.split(',') if x.strip().isdigit()]
+    rb_root = None
+    for val in rb_values:
+        rb_root = insert_red_black_tree(rb_root, val)
+        st.write(f"Inserted: {val}")
+        st.code(display_tree(rb_root), language="text")
+        time.sleep(1)
+
+    search_val = st.number_input("Search for a value in the Red-Black Tree:", value=10, step=1)
+    if st.button("Search Red-Black"):
+         found_node = search_red_black_tree(rb_root, search_val)
+         if found_node:
+            st.write(f"Value {search_val} found in the Red-Black Tree.")
+         else:
+            st.write(f"Value {search_val} not found.")
+
+elif structure_choice == "B-Tree (Conceptual)":
+    st.header("B-Tree (Conceptual Representation)")
+    st.write("B-Trees are self-balancing tree structures, often used for disk-based storage.  Visualizing their structure, especially with multiple children per node, is not easily done in a text-based interface.  This section provides a simplified conceptual view. A dedicated visualization tool is recommended for a full graphical representation.")
+    b_data = st.text_input("Enter comma-separated values (e.g., 10,20,30,15,25,5)", "10,20,30,15,25,5")
+    b_values = [int(x.strip()) for x in b_data.split(',') if x.strip().isdigit()]
+    b_root = None
+    for val in b_values:
+        b_root = insert_b_tree(b_root, val)
+        st.write(f"Inserted: {val}")
+        st.code(display_tree(b_root), language="text")
+        time.sleep(1)
+
+    search_val = st.number_input("Search for a value in the B-Tree:", value=10, step=1)
+    if st.button("Search B-Tree"):
+        found_node = search_b_tree(b_root, search_val)
+        if found_node:
+            st.write(f"Value {search_val} found in the B-Tree.")
+        else:
+            st.write(f"Value {search_val} not found.")
