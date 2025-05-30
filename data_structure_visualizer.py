@@ -120,7 +120,6 @@ st.header("2. Detailed Characteristics of Each Memory Level")
 st.write("This table provides a comprehensive overview of each memory level's properties.")
 st.dataframe(df.set_index("Level"), use_container_width=True)
 
-
 st.markdown("---")
 st.header("3. Understanding the Hierarchy: Key Principles")
 st.markdown("""
@@ -141,6 +140,39 @@ It leverages several key principles:
     * **Speed vs. Capacity:** Faster memory is generally smaller in capacity.
     * **Speed vs. Cost:** Faster memory is significantly more expensive per bit.
     The hierarchy optimizes overall system performance and cost by providing multiple levels of memory with varying characteristics.
+""")
+
+st.markdown("---")
+st.header("4. Real-World Examples & Impact")
+st.markdown("""
+To better understand the memory hierarchy, let's look at how it affects your everyday computer usage:
+
+* **Analogy: The Chef's Kitchen 👨‍🍳**
+    * **CPU:** The Chef (the worker).
+    * **Registers:** The ingredients currently in the Chef's hands or on the cutting board (immediate use, tiny amount, super fast).
+    * **L1/L2 Cache:** The small spice rack (L1) right next to the cutting board, and the pantry (L2) a few steps away in the kitchen (frequently used ingredients, fast access).
+    * **L3 Cache:** The walk-in refrigerator (L3) just outside the kitchen door (larger, takes a short walk, shared by multiple chefs).
+    * **Main Memory (RAM):** The main grocery store in town (much larger, but requires leaving the kitchen and traveling). All the ingredients you've bought for today's dishes are here.
+    * **Secondary Storage (SSD/HDD):** The vast warehouse on the outskirts of the city where all raw ingredients are stored (enormous capacity, but takes a long time to get anything). This is where you store ingredients you might need next month.
+
+* **Opening an Application (e.g., a Web Browser):**
+    * When you click the browser icon, its program code and initial data are loaded from **Secondary Storage (SSD/HDD)** into **Main Memory (RAM)**. This is why apps take time to launch.
+    * As you interact with the browser, frequently used parts of its code and data (e.g., your Browse history, currently open tabs) are moved from RAM into **L3, L2, and L1 Caches** for quick access by the **CPU**.
+
+* **Browse a Website (Scrolling):**
+    * When you scroll down a long web page, the browser predicts you'll need the next section of content. This "pre-fetching" leverages **spatial locality**, bringing data from **RAM** into **cache** before the **CPU** even explicitly requests it. This makes scrolling feel smooth.
+
+* **Playing a Game:**
+    * The game's executable and large assets (textures, models) reside on **Secondary Storage**.
+    * The actively loaded level, characters, and currently used game data are in **Main Memory (RAM)**.
+    * The very specific instructions and small data sets the **CPU** needs *right now* (e.g., calculating character movement, rendering a specific frame) are brought into **cache**. A "cache miss" (CPU needing data not in cache) can cause micro-stutters.
+
+* **Running Out of RAM ("System Slows Down"):**
+    * If you open too many programs or large files, your **Main Memory (RAM)** might become full.
+    * The operating system then has to temporarily move (swap) data from RAM back to **Secondary Storage (SSD/HDD)** to free up space. This is called **virtual memory** or "paging."
+    * Accessing data from disk is thousands to millions of times slower than RAM, leading to a noticeable slowdown, often indicated by disk activity lights flickering constantly.
+
+Understanding this hierarchy helps you appreciate why more RAM often improves multitasking, why SSDs feel much faster than HDDs, and why a CPU with a larger cache can perform better in certain tasks.
 """)
 
 st.markdown("---")
