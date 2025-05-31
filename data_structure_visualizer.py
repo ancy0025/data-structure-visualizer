@@ -1,6 +1,6 @@
 import streamlit as st
-import pandas as pd # Used for the array visualization, generally useful
-import graphviz # For visualizing Linked Lists and Binary Search Trees
+import pandas as pd
+import graphviz
 
 # --- Helper Functions for Binary Search Tree (BST) ---
 # This class defines a node in our BST.
@@ -44,7 +44,7 @@ This application helps you understand fundamental **data structures** by letting
 Use the **sidebar** to select a data structure and its operations.
 """)
 
-# --- Initialize Session State for Data Structures ---
+# --- Initialize Session State for Data Structures and Input Keys ---
 # Session state ensures that the data persists across user interactions.
 if 'array_data' not in st.session_state:
     st.session_state.array_data = []
@@ -55,7 +55,19 @@ if 'stack_data' not in st.session_state:
 if 'queue_data' not in st.session_state:
     st.session_state.queue_data = []
 if 'bst_root' not in st.session_state:
-    st.session_state.bst_root = None # Stores the root node of the BST
+    st.session_state.bst_root = None
+
+# Input field clear counters - crucial for clearing input fields after submission
+if 'array_input_key' not in st.session_state:
+    st.session_state.array_input_key = 0
+if 'll_input_key' not in st.session_state:
+    st.session_state.ll_input_key = 0
+if 'stack_input_key' not in st.session_state:
+    st.session_state.stack_input_key = 0
+if 'queue_input_key' not in st.session_state:
+    st.session_state.queue_input_key = 0
+if 'bst_input_key' not in st.session_state:
+    st.session_state.bst_input_key = 0 # For number_input too
 
 # --- Sidebar for Navigation ---
 st.sidebar.header("Select Data Structure")
@@ -89,16 +101,22 @@ if selected_ds == "Array/List":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        new_element = st.text_input("Enter element to add:", key="array_input")
+        # --- FIX APPLIED HERE ---
+        # Old: new_element = st.text_input("Enter element to add:", key="array_input")
+        # Old: st.session_state.array_input = ""
+        # New:
+        new_element = st.text_input("Enter element to add:", key=f"array_input_{st.session_state.array_input_key}")
         if st.button("Add Element to End", key="add_array_btn"):
             if new_element:
                 st.session_state.array_data.append(new_element)
-                st.session_state.array_input = "" # Clear input box
+                st.session_state.array_input_key += 1 # Increment key to clear input
+                st.rerun() # Rerun to apply new key and clear input
             else:
                 st.warning("Please enter an element to add.")
         if st.button("Clear Array", key="clear_array_btn"):
             st.session_state.array_data = []
             st.info("Array cleared!")
+            st.rerun() # Rerun to update visualization
 
     with col2:
         st.subheader("Visualization")
@@ -134,23 +152,30 @@ elif selected_ds == "Linked List":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        ll_element = st.text_input("Enter element to add (at end):", key="ll_input")
+        # --- FIX APPLIED HERE ---
+        # Old: ll_element = st.text_input("Enter element to add (at end):", key="ll_input")
+        # Old: st.session_state.ll_input = ""
+        # New:
+        ll_element = st.text_input("Enter element to add (at end):", key=f"ll_input_{st.session_state.ll_input_key}")
         if st.button("Add Element to End", key="add_ll_btn"):
             if ll_element:
                 node_id = len(st.session_state.linked_list_nodes) # Unique ID for Graphviz nodes
                 st.session_state.linked_list_nodes.append((ll_element, node_id))
-                st.session_state.ll_input = "" # Clear input
+                st.session_state.ll_input_key += 1 # Increment key to clear input
+                st.rerun() # Rerun to apply new key and clear input
             else:
                 st.warning("Please enter an element.")
         if st.button("Remove from Front", key="remove_ll_btn"):
             if st.session_state.linked_list_nodes:
                 removed_val, _ = st.session_state.linked_list_nodes.pop(0) # Remove the first element
-                st.success(f"Removed: {removed_val}")
+                st.success(f"Removed: **{removed_val}**")
+                st.rerun() # Rerun to update visualization
             else:
                 st.warning("Linked List is empty. Cannot remove.")
         if st.button("Clear Linked List", key="clear_ll_btn"):
             st.session_state.linked_list_nodes = []
             st.info("Linked List cleared!")
+            st.rerun() # Rerun to update visualization
 
     with col2:
         st.subheader("Visualization")
@@ -197,22 +222,29 @@ elif selected_ds == "Stack":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        stack_element = st.text_input("Enter element to push:", key="stack_input")
+        # --- FIX APPLIED HERE ---
+        # Old: stack_element = st.text_input("Enter element to push:", key="stack_input")
+        # Old: st.session_state.stack_input = ""
+        # New:
+        stack_element = st.text_input("Enter element to push:", key=f"stack_input_{st.session_state.stack_input_key}")
         if st.button("Push (Add to Top)", key="push_stack_btn"):
             if stack_element:
                 st.session_state.stack_data.append(stack_element)
-                st.session_state.stack_input = ""
+                st.session_state.stack_input_key += 1 # Increment key
+                st.rerun() # Rerun to apply new key
             else:
                 st.warning("Please enter an element to push.")
         if st.button("Pop (Remove from Top)", key="pop_stack_btn"):
             if st.session_state.stack_data:
                 popped_val = st.session_state.stack_data.pop()
                 st.success(f"Popped: **{popped_val}**")
+                st.rerun() # Rerun to update visualization
             else:
                 st.warning("Stack is empty. Cannot pop.")
         if st.button("Clear Stack", key="clear_stack_btn"):
             st.session_state.stack_data = []
             st.info("Stack cleared!")
+            st.rerun() # Rerun to update visualization
 
     with col2:
         st.subheader("Visualization")
@@ -251,22 +283,29 @@ elif selected_ds == "Queue":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        queue_element = st.text_input("Enter element to enqueue:", key="queue_input")
+        # --- FIX APPLIED HERE ---
+        # Old: queue_element = st.text_input("Enter element to enqueue:", key="queue_input")
+        # Old: st.session_state.queue_input = ""
+        # New:
+        queue_element = st.text_input("Enter element to enqueue:", key=f"queue_input_{st.session_state.queue_input_key}")
         if st.button("Enqueue (Add to Rear)", key="enqueue_queue_btn"):
             if queue_element:
                 st.session_state.queue_data.append(queue_element)
-                st.session_state.queue_input = ""
+                st.session_state.queue_input_key += 1 # Increment key
+                st.rerun() # Rerun to apply new key
             else:
                 st.warning("Please enter an element to enqueue.")
         if st.button("Dequeue (Remove from Front)", key="dequeue_queue_btn"):
             if st.session_state.queue_data:
                 dequeued_val = st.session_state.queue_data.pop(0) # Python list pop(0) removes from front
                 st.success(f"Dequeued: **{dequeued_val}**")
+                st.rerun() # Rerun to update visualization
             else:
                 st.warning("Queue is empty. Cannot dequeue.")
         if st.button("Clear Queue", key="clear_queue_btn"):
             st.session_state.queue_data = []
             st.info("Queue cleared!")
+            st.rerun() # Rerun to update visualization
 
     with col2:
         st.subheader("Visualization")
@@ -338,17 +377,23 @@ elif selected_ds == "Binary Search Tree":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key="bst_input")
+        # --- FIX APPLIED HERE ---
+        # Old: bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key="bst_input")
+        # Old: st.session_state.bst_input = None
+        # New:
+        bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key=f"bst_input_{st.session_state.bst_input_key}")
         if st.button("Insert Value", key="insert_bst_btn"):
             if bst_value is not None:
                 st.session_state.bst_root = insert_bst_node(st.session_state.bst_root, int(bst_value))
-                st.session_state.bst_input = None # Clear input (resets to default value)
-                st.success(f"Inserted: **{int(bst_value)}**")
+                st.session_state.bst_input_key += 1 # Increment key
+                st.rerun() # Rerun to apply new key
+                st.success(f"Inserted: **{int(bst_value)}**") # Success message after rerun
             else:
-                st.warning("Please enter an integer value to insert.")
+                st.warning("Please enter an integer value.")
         if st.button("Clear BST", key="clear_bst_btn"):
             st.session_state.bst_root = None
             st.info("BST cleared!")
+            st.rerun() # Rerun to update visualization
 
     with col2:
         st.subheader("Visualization")
