@@ -80,50 +80,36 @@ st.sidebar.markdown("---")
 st.sidebar.info("Use the controls below to interact with the selected data structure.")
 
 # --- Main Content Area based on Selection ---
-
 # --- Array/List Visualization ---
 if selected_ds == "Array/List":
-    st.header("1. Array / List")
-    st.write("""
-    An **Array** (or **List** in Python) is a collection of items stored at **contiguous memory locations**.
-    It's one of the simplest and most fundamental data structures, providing **direct access** to elements using their index.
-    """)
-
-    st.subheader("Key Properties:")
-    st.markdown("""
-    * **Contiguous Memory:** Elements are stored in a single, unbroken block of memory.
-    * **Direct Access (by Index):** You can access any element very quickly ($O(1)$) by knowing its position (index).
-    * **Dynamic Sizing (Python Lists):** :warning: Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
-    * **Insertion/Deletion (Middle):** Inserting or deleting elements in the middle can be slow ($O(N)$) because subsequent elements might need to be shifted.
-    """)
-
-    st.subheader("Interactive Example:")
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.subheader("Controls")
-        new_element = st.text_input("Enter element to add:", key=f"array_input_{st.session_state.array_input_key}")
-        if st.button("Add Element to End", key="add_array_btn"):
-            if new_element:
-                st.session_state.array_data.append(new_element)
-                st.success(f"Added: **{new_element}** to Array") # Add success message
-                st.session_state.array_input_key += 1 # Increment key to clear input for NEXT interaction
-                st.rerun() # Rerun to apply new key and clear input
-            else:
-                st.warning("Please enter an element to add.")
-        if st.button("Clear Array", key="clear_array_btn"):
-            st.session_state.array_data = []
-            st.info("Array cleared!")
-            st.rerun() # Rerun to update visualization
+    # ... (rest of the code remains the same until the visualization part)
 
     with col2:
         st.subheader("Visualization")
         if st.session_state.array_data:
-            # Display using columns for a clear indexed view
-            cols_viz = st.columns(len(st.session_state.array_data))
             st.markdown("<p style='text-align: center; font-weight: bold;'>Array Elements:</p>", unsafe_allow_html=True)
+            
+            # Create a container for the array elements to ensure proper horizontal layout
+            st.markdown("<div style='display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;'>", unsafe_allow_html=True)
+
             for i, val in enumerate(st.session_state.array_data):
-                with cols_viz[i]:
-                    st.markdown(f"<div style='border: 1px solid #ddd; padding: 10px; margin: 5px; text-align: center; background-color: #e0f7fa; border-radius: 5px;'><b>[{i}]</b><br>{val}</div>", unsafe_allow_html=True)
+                # Revised HTML structure for better clarity and robustness
+                st.markdown(f"""
+                    <div style='
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        margin: 5px;
+                        text-align: center;
+                        background-color: #e0f7fa;
+                        border-radius: 5px;
+                        min-width: 80px; /* Ensure a minimum width for the box */
+                        box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* Add a subtle shadow for better visual separation */
+                    '>
+                        <b>[{i}]</b><br> <span style='font-size: 1.2em; font-weight: bold; color: #333;'>{val}</span> </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True) # Close the container div
+
             st.write(f"**Current Size:** {len(st.session_state.array_data)} elements")
         else:
             st.info("Array is empty. Add some elements to visualize!")
