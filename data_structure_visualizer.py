@@ -93,7 +93,7 @@ if selected_ds == "Array/List":
     st.markdown("""
     * **Contiguous Memory:** Elements are stored in a single, unbroken block of memory.
     * **Direct Access (by Index):** You can access any element very quickly ($O(1)$) by knowing its position (index).
-    * **Dynamic Sizing (Python Lists):** Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
+    * **Dynamic Sizing (Python Lists)::warning: Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
     * **Insertion/Deletion (Middle):** Inserting or deleting elements in the middle can be slow ($O(N)$) because subsequent elements might need to be shifted.
     """)
 
@@ -101,10 +101,6 @@ if selected_ds == "Array/List":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        # --- FIX APPLIED HERE ---
-        # Old: new_element = st.text_input("Enter element to add:", key="array_input")
-        # Old: st.session_state.array_input = ""
-        # New:
         new_element = st.text_input("Enter element to add:", key=f"array_input_{st.session_state.array_input_key}")
         if st.button("Add Element to End", key="add_array_btn"):
             if new_element:
@@ -152,10 +148,6 @@ elif selected_ds == "Linked List":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        # --- FIX APPLIED HERE ---
-        # Old: ll_element = st.text_input("Enter element to add (at end):", key="ll_input")
-        # Old: st.session_state.ll_input = ""
-        # New:
         ll_element = st.text_input("Enter element to add (at end):", key=f"ll_input_{st.session_state.ll_input_key}")
         if st.button("Add Element to End", key="add_ll_btn"):
             if ll_element:
@@ -222,10 +214,6 @@ elif selected_ds == "Stack":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        # --- FIX APPLIED HERE ---
-        # Old: stack_element = st.text_input("Enter element to push:", key="stack_input")
-        # Old: st.session_state.stack_input = ""
-        # New:
         stack_element = st.text_input("Enter element to push:", key=f"stack_input_{st.session_state.stack_input_key}")
         if st.button("Push (Add to Top)", key="push_stack_btn"):
             if stack_element:
@@ -283,10 +271,6 @@ elif selected_ds == "Queue":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        # --- FIX APPLIED HERE ---
-        # Old: queue_element = st.text_input("Enter element to enqueue:", key="queue_input")
-        # Old: st.session_state.queue_input = ""
-        # New:
         queue_element = st.text_input("Enter element to enqueue:", key=f"queue_input_{st.session_state.queue_input_key}")
         if st.button("Enqueue (Add to Rear)", key="enqueue_queue_btn"):
             if queue_element:
@@ -369,7 +353,7 @@ elif selected_ds == "Binary Search Tree":
     st.markdown("""
     * **Ordered Structure:** This property allows for efficient searching.
     * **Efficient Search, Insertion, Deletion:** In a balanced BST, these operations take $O(\log N)$ time on average. In the worst-case (e.g., inserting sorted numbers), it can degrade to $O(N)$, resembling a linked list.
-    * **No Duplicates:** Typically, BSTs do not allow duplicate values.
+    * **No Duplicates:warning: Typically, BSTs do not allow duplicate values.
     * **Applications:** Implementing dictionaries/maps, priority queues, efficient sorting.
     """)
 
@@ -377,10 +361,6 @@ elif selected_ds == "Binary Search Tree":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
-        # --- FIX APPLIED HERE ---
-        # Old: bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key="bst_input")
-        # Old: st.session_state.bst_input = None
-        # New:
         bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key=f"bst_input_{st.session_state.bst_input_key}")
         if st.button("Insert Value", key="insert_bst_btn"):
             if bst_value is not None:
