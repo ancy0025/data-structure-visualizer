@@ -93,7 +93,7 @@ if selected_ds == "Array/List":
     st.markdown("""
     * **Contiguous Memory:** Elements are stored in a single, unbroken block of memory.
     * **Direct Access (by Index):** You can access any element very quickly ($O(1)$) by knowing its position (index).
-    * **Dynamic Sizing (Python Lists)::warning: Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
+    * **Dynamic Sizing (Python Lists):** :warning: Python lists can grow or shrink. When they grow beyond their current capacity, a new, larger block of memory is allocated, and elements are copied over.
     * **Insertion/Deletion (Middle):** Inserting or deleting elements in the middle can be slow ($O(N)$) because subsequent elements might need to be shifted.
     """)
 
@@ -105,7 +105,8 @@ if selected_ds == "Array/List":
         if st.button("Add Element to End", key="add_array_btn"):
             if new_element:
                 st.session_state.array_data.append(new_element)
-                st.session_state.array_input_key += 1 # Increment key to clear input
+                st.success(f"Added: **{new_element}** to Array") # Add success message
+                st.session_state.array_input_key += 1 # Increment key to clear input for NEXT interaction
                 st.rerun() # Rerun to apply new key and clear input
             else:
                 st.warning("Please enter an element to add.")
@@ -153,6 +154,7 @@ elif selected_ds == "Linked List":
             if ll_element:
                 node_id = len(st.session_state.linked_list_nodes) # Unique ID for Graphviz nodes
                 st.session_state.linked_list_nodes.append((ll_element, node_id))
+                st.success(f"Added: **{ll_element}** to Linked List")
                 st.session_state.ll_input_key += 1 # Increment key to clear input
                 st.rerun() # Rerun to apply new key and clear input
             else:
@@ -218,6 +220,7 @@ elif selected_ds == "Stack":
         if st.button("Push (Add to Top)", key="push_stack_btn"):
             if stack_element:
                 st.session_state.stack_data.append(stack_element)
+                st.success(f"Pushed: **{stack_element}** to Stack") # Add success message
                 st.session_state.stack_input_key += 1 # Increment key
                 st.rerun() # Rerun to apply new key
             else:
@@ -275,6 +278,7 @@ elif selected_ds == "Queue":
         if st.button("Enqueue (Add to Rear)", key="enqueue_queue_btn"):
             if queue_element:
                 st.session_state.queue_data.append(queue_element)
+                st.success(f"Enqueued: **{queue_element}** to Queue") # Add success message
                 st.session_state.queue_input_key += 1 # Increment key
                 st.rerun() # Rerun to apply new key
             else:
@@ -353,7 +357,7 @@ elif selected_ds == "Binary Search Tree":
     st.markdown("""
     * **Ordered Structure:** This property allows for efficient searching.
     * **Efficient Search, Insertion, Deletion:** In a balanced BST, these operations take $O(\log N)$ time on average. In the worst-case (e.g., inserting sorted numbers), it can degrade to $O(N)$, resembling a linked list.
-    * **No Duplicates:warning: Typically, BSTs do not allow duplicate values.
+    * **No Duplicates:** :warning: Typically, BSTs do not allow duplicate values.
     * **Applications:** Implementing dictionaries/maps, priority queues, efficient sorting.
     """)
 
@@ -361,13 +365,15 @@ elif selected_ds == "Binary Search Tree":
     col1, col2 = st.columns([1, 2])
     with col1:
         st.subheader("Controls")
+        # Added a clearer note about duplicates for the user
+        st.info("Note: Duplicate values are not allowed in this BST implementation.")
         bst_value = st.number_input("Enter integer value to insert:", step=1, value=0, key=f"bst_input_{st.session_state.bst_input_key}")
         if st.button("Insert Value", key="insert_bst_btn"):
             if bst_value is not None:
                 st.session_state.bst_root = insert_bst_node(st.session_state.bst_root, int(bst_value))
+                st.success(f"Inserted: **{int(bst_value)}**") # Success message after rerun
                 st.session_state.bst_input_key += 1 # Increment key
                 st.rerun() # Rerun to apply new key
-                st.success(f"Inserted: **{int(bst_value)}**") # Success message after rerun
             else:
                 st.warning("Please enter an integer value.")
         if st.button("Clear BST", key="clear_bst_btn"):
